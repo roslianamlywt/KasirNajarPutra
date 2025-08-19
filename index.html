@@ -48,7 +48,7 @@
 </head>
 <body>
   <header>
-    <h1>Kasir & Stok</h1>
+    <h1>Toko Bangunan Najar Putra</h1>
     <div class="row">
       <span class="chip"><span id="loginState">Belum login</span></span>
       <button id="btnLogout" class="btn-bad" style="display:none" onclick="logout()">Logout</button>
@@ -64,7 +64,6 @@
           <input id="inUser" placeholder="Username" />
           <input id="inPass" type="password" placeholder="Password" />
           <button class="btn" onclick="login()">Login</button>
-          <div class="muted">Demo: <b>kasir</b> / <b>1234</b> (atau buat user di Firestore → kol. users)</div>
         </div>
       </div>
     </section>
@@ -331,16 +330,6 @@
         console.error(e);
       }
 
-      // fallback: demo user (if no Firestore user)
-      if(u==='kasir' && p==='1234'){
-        session = {u:'kasir', name:'Kasir Demo', ts: nowISO()};
-        store.set('session', session); setLoginState();
-        document.getElementById('sec-login').classList.remove('active');
-        document.getElementById('sec-menu').classList.add('active');
-        return;
-      }
-      alert('Username atau password salah');
-    }
     function logout(){ session=null; localStorage.removeItem('session'); setLoginState(); go('sec-login'); }
 
     // ---------- PRODUCTS ----------
@@ -706,3 +695,4 @@
   </script>
 </body>
 </html>
+
