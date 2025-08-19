@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Kasir & Stok Toko Bangunan</title>
-  <style>
+  <title>Toko Bangunan Najar Putra</title>
+  <style>   
     :root{--bg:#f6f7fb;--card:#ffffff;--pri:#2563eb;--ok:#16a34a;--warn:#ea580c;--bad:#dc2626;--muted:#6b7280}
     *{box-sizing:border-box}
     body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,'Helvetica Neue',Arial,'Noto Sans',sans-serif;background:var(--bg);color:#111}
@@ -17,7 +17,8 @@
     .grid{display:grid;gap:12px}
     .grid-2{grid-template-columns:repeat(2,minmax(0,1fr))}
     .grid-3{grid-template-columns:repeat(3,minmax(0,1fr))}
-    @media(max-width:860px){.grid-2,.grid-3{grid-template-columns:1fr}}
+    .grid-4{grid-template-columns:repeat(4,minmax(0,1fr))}
+    @media(max-width:860px){.grid-2,.grid-3,.grid-4{grid-template-columns:1fr}}
     input,select,button,textarea{width:100%;padding:10px 12px;border-radius:10px;border:1px solid #e5e7eb;background:#fff}
     input:focus,select:focus,textarea:focus{outline:none;border-color:var(--pri);box-shadow:0 0 0 3px rgba(37,99,235,.12)}
     button{cursor:pointer;transition:.15s}
@@ -37,7 +38,14 @@
     tfoot td{font-weight:700}
     .right{text-align:right}
     .muted{color:var(--muted)}
-    .chip{display:inline-flex;align-items:center;gap:6px;background:#f1f5f9;border:1px solid #e5e7eb;border-radius:999px;padding:4px 10px;font-size:12px}
+    .chip{display:inline-flex;align-items:center;gap:6px;background:#f1f5f9;border:1px solid #e5e7eb;border-radius:999px;padding:4px 10px;font-size:12px}   
+    footer {
+      background: #eee;
+      text-align: center;
+      padding: 10px;
+      font-size: 14px;
+      color: #555;
+    }
 
     /* sections */
     section{display:none}
@@ -46,6 +54,13 @@
     /* login */
     .login{max-width:400px;margin:8vh auto}
     .brand{font-size:22px;font-weight:800;margin-bottom:8px}
+
+    /* payment summary */
+    .payment-summary{background:#f8fafc;border:1px solid #e5e7eb;border-radius:10px;padding:16px;margin-top:12px}
+    .payment-row{display:flex;justify-content:space-between;align-items:center;margin:8px 0}
+    .payment-value{font-weight:600}
+    .total-row{border-top:2px solid #e5e7eb;padding-top:12px;margin-top:12px;font-size:18px;font-weight:700}
+    .change-display{background:#dcfce7;border:1px solid #bbf7d0;color:#166534;font-size:16px;font-weight:700;text-align:center;padding:12px;border-radius:8px;margin:8px 0}
 
     /* print styles for thermal receipt */
     #printArea{display:none}
@@ -61,24 +76,24 @@
 </head>
 <body>
   <header>
-    <h1>Kasir & Stok</h1>
+    <img src="logonajar.png" alt="Logo Toko Najar Putra" width="100">
     <div class="row">
       <span class="chip"><span id="loginState">Belum login</span></span>
       <button id="btnLogout" class="btn-bad" style="display:none" onclick="logout()">Logout</button>
     </div>
   </header>
+  
 
   <div class="wrap">
 
     <!-- LOGIN -->
     <section id="sec-login" class="active">
       <div class="card p16 login">
-        <div class="brand">Masuk Kasir</div>
+        <div class="brand">Kasir Toko Najar Putra</div>
         <div class="grid">
           <input id="inUser" placeholder="Username" />
           <input id="inPass" type="password" placeholder="Password" />
           <button class="btn" onclick="login()">Login</button>
-          <div class="muted">Demo: <b>kasir</b> / <b>1234</b></div>
         </div>
       </div>
     </section>
@@ -88,12 +103,12 @@
       <div class="card p16">
         <h2 class="title">Menu</h2>
         <div class="grid grid-3">
-          <button class="btn" onclick="go('sec-in')">📦 Data Barang Masuk</button>
-          <button class="btn" onclick="go('sec-out')">📤 Data Barang Keluar</button>
-          <button class="btn" onclick="go('sec-pos')">🧾 Transaksi Kasir</button>
-          <button class="btn" onclick="go('sec-sales')">📚 Daftar Transaksi</button>
-          <button class="btn" onclick="go('sec-opname')">📊 Stok Opname</button>
-          <button class="btn btn-ghost" onclick="go('sec-products')">🗂️ Master Produk</button>
+          <button class="btn" onclick="go('sec-in')">Data Barang Masuk</button>
+          <button class="btn" onclick="go('sec-out')">Data Barang Keluar</button>
+          <button class="btn" onclick="go('sec-pos')">Transaksi Kasir</button>
+          <button class="btn" onclick="go('sec-sales')">Daftar Transaksi</button>
+          <button class="btn" onclick="go('sec-opname')">Stok Opname</button>
+          <button class="btn btn-ghost" onclick="go('sec-products')">Master Produk</button>
         </div>
       </div>
     </section>
@@ -103,7 +118,6 @@
       <div class="card p16">
         <div class="row wrap" style="justify-content:space-between">
           <h2 class="title">Master Produk</h2>
-          <button class="btn btn-ghost" onclick="go('sec-menu')">⬅ Kembali</button>
         </div>
         <div class="grid grid-3 mt12">
           <input id="pName" placeholder="Nama produk" />
@@ -119,6 +133,7 @@
             <thead><tr><th>Nama</th><th>SKU</th><th class="right">Harga</th><th class="right">Stok</th><th>Aksi</th></tr></thead>
             <tbody id="tblProducts"></tbody>
           </table>
+          <button class="btn btn-ghost" onclick="go('sec-menu')">Kembali</button>
         </div>
       </div>
     </section>
@@ -128,7 +143,6 @@
       <div class="card p16">
         <div class="row wrap" style="justify-content:space-between">
           <h2 class="title">Barang Masuk</h2>
-          <button class="btn btn-ghost" onclick="go('sec-menu')">⬅ Kembali</button>
         </div>
         <div class="grid grid-3 mt12">
           <select id="inProd"></select>
@@ -144,6 +158,7 @@
             <thead><tr><th>Tgl</th><th>Produk</th><th class="right">Qty</th><th>Catatan</th></tr></thead>
             <tbody id="tblIn"></tbody>
           </table>
+          <button class="btn btn-ghost" onclick="go('sec-menu')">Kembali</button>
         </div>
       </div>
     </section>
@@ -153,7 +168,6 @@
       <div class="card p16">
         <div class="row wrap" style="justify-content:space-between">
           <h2 class="title">Barang Keluar / Penyesuaian</h2>
-          <button class="btn btn-ghost" onclick="go('sec-menu')">⬅ Kembali</button>
         </div>
         <div class="grid grid-3 mt12">
           <select id="outProd"></select>
@@ -169,6 +183,7 @@
             <thead><tr><th>Tgl</th><th>Produk</th><th class="right">Qty</th><th>Alasan</th></tr></thead>
             <tbody id="tblOut"></tbody>
           </table>
+           <button class="btn btn-ghost" onclick="go('sec-menu')">Kembali</button>
         </div>
       </div>
     </section>
@@ -178,7 +193,7 @@
       <div class="card p16">
         <div class="row wrap" style="justify-content:space-between">
           <h2 class="title">Transaksi Kasir</h2>
-          <button class="btn btn-ghost" onclick="go('sec-menu')">⬅ Kembali</button>
+          
         </div>
         <div class="grid grid-3 mt12">
           <select id="posProd"></select>
@@ -192,15 +207,44 @@
           <table>
             <thead><tr><th>Produk</th><th class="right">Harga</th><th class="right">Qty</th><th class="right">Subtotal</th><th></th></tr></thead>
             <tbody id="tblCart"></tbody>
-            <tfoot><tr><td colspan="3" class="right">Total</td><td class="right" id="cartTotal">0</td><td></td></tr></tfoot>
+            <tfoot><tr><td colspan="3" class="right">Subtotal</td><td class="right" id="cartSubtotal">0</td><td></td></tr></tfoot>
           </table>
-          <div class="grid grid-3 mt12">
-            <input id="payCash" type="number" placeholder="Tunai diterima" />
-            <input id="payNote" placeholder="Catatan (opsional)" />
-            <button class="btn" onclick="checkout()">Bayar & Cetak</button>
+          
+          <!-- Payment Summary -->
+          <div class="payment-summary">
+            <div class="grid grid-4">
+              <input id="payDiscount" type="number" placeholder="Diskon (Rp)" oninput="updatePaymentSummary()" />
+              <input id="payCash" type="number" placeholder="Tunai diterima" oninput="updatePaymentSummary()" />
+              <input id="payNote" placeholder="Catatan (opsional)" />
+              <div></div>
+            </div>
+            
+            <div class="payment-row">
+              <span>Subtotal:</span>
+              <span class="payment-value" id="summarySubtotal">Rp 0</span>
+            </div>
+            <div class="payment-row">
+              <span>Diskon:</span>
+              <span class="payment-value" id="summaryDiscount">Rp 0</span>
+            </div>
+            <div class="payment-row total-row">
+              <span>Total Bayar:</span>
+              <span class="payment-value" id="summaryTotal">Rp 0</span>
+            </div>
+            <div class="payment-row">
+              <span>Tunai Diterima:</span>
+              <span class="payment-value" id="summaryCash">Rp 0</span>
+            </div>
+            
+            <div id="changeDisplay" class="change-display" style="display:none">
+              Kembalian: <span id="changeAmount">Rp 0</span>
+            </div>
+            
+            <button class="btn mt12" onclick="checkout()" id="checkoutBtn" disabled>Bayar & Cetak</button>
           </div>
         </div>
       </div>
+      <button class="btn btn-ghost" onclick="go('sec-menu')">⬅ Kembali</button>
     </section>
 
     <!-- DAFTAR TRANSAKSI -->
@@ -208,7 +252,6 @@
       <div class="card p16">
         <div class="row wrap" style="justify-content:space-between">
           <h2 class="title">Daftar Transaksi</h2>
-          <button class="btn btn-ghost" onclick="go('sec-menu')">⬅ Kembali</button>
         </div>
         <div class="grid grid-3 mt12">
           <input id="sFrom" type="date" />
@@ -220,6 +263,7 @@
             <thead><tr><th>Waktu</th><th>ID</th><th class="right">Item</th><th class="right">Total</th><th>Kasir</th><th>Aksi</th></tr></thead>
             <tbody id="tblSales"></tbody>
           </table>
+          <button class="btn btn-ghost" onclick="go('sec-menu')">Kembali</button>
         </div>
       </div>
     </section>
@@ -229,7 +273,6 @@
       <div class="card p16">
         <div class="row wrap" style="justify-content:space-between">
           <h2 class="title">Stok Opname</h2>
-          <button class="btn btn-ghost" onclick="go('sec-menu')">⬅ Kembali</button>
         </div>
         <div class="mt12">
           <table>
@@ -241,12 +284,14 @@
           </div>
         </div>
       </div>
+      <button class="btn btn-ghost" onclick="go('sec-menu')">Kembali</button>
     </section>
   </div>
 
   <!-- PRINT AREA (THERMAL) -->
   <div id="printArea">
-    <h3 style="text-align:center">TOKO BANGUNAN</h3>
+    <img src="logonajar.png" alt="Logo Toko Najar Putra" width="100">
+    <h3 style="text-align:center">TOKO BANGUNAN NAJAR PUTRA</h3>
     <p style="text-align:center">Jl. Contoh 123 · 0812-3456-7890</p>
     <p id="prnMeta"></p>
     <table>
@@ -256,6 +301,8 @@
     <hr />
     <table>
       <tbody>
+        <tr><td>Subtotal</td><td class="right" id="prnSubtotal"></td></tr>
+        <tr><td>Diskon</td><td class="right" id="prnDiscount"></td></tr>
         <tr><td><b>Total</b></td><td class="right" id="prnTotal"></td></tr>
         <tr><td>Tunai</td><td class="right" id="prnCash"></td></tr>
         <tr><td>Kembali</td><td class="right" id="prnChange"></td></tr>
@@ -276,7 +323,7 @@
     }
 
     // Default seed
-    if(!store.get('users')) store.set('users',[{u:'kasir',p:'1234',name:'Kasir Demo'}]);
+    if(!store.get('users')) store.set('users',[{u:'kasir',p:'1234',name:'Kasir Najar Putra'}]);
     if(!store.get('products')) store.set('products',[]);
     if(!store.get('stockIn')) store.set('stockIn',[]);
     if(!store.get('stockOut')) store.set('stockOut',[]);
@@ -418,50 +465,132 @@
 
     // === POS ===
     let cart = [];
-    function resetCartUI(){ cart=[]; renderCart(); document.getElementById('payCash').value=''; document.getElementById('payNote').value=''; document.getElementById('posQty').value='';}
+    function resetCartUI(){ 
+      cart=[]; 
+      renderCart(); 
+      document.getElementById('payCash').value=''; 
+      document.getElementById('payNote').value=''; 
+      document.getElementById('posQty').value='';
+      document.getElementById('payDiscount').value='';
+      updatePaymentSummary();
+    }
+    
     function addToCart(){
       const pid = document.getElementById('posProd').value; if(!pid) return;
       const price = Number(document.getElementById('posPrice').value||0);
       const qty = Number(document.getElementById('posQty').value||0); if(qty<=0) return alert('Qty > 0');
       const p = store.get('products',[]).find(x=>x.id===pid); if(!p) return;
       cart.push({pid,name:p.name,price,qty,sub:price*qty});
-      renderCart(); document.getElementById('posQty').value='';
+      renderCart(); 
+      document.getElementById('posQty').value='';
+      updatePaymentSummary();
     }
-    function removeCart(i){ cart.splice(i,1); renderCart(); }
+    
+    function removeCart(i){ 
+      cart.splice(i,1); 
+      renderCart(); 
+      updatePaymentSummary();
+    }
+    
     function renderCart(){
       const rows = cart.map((c,i)=>`<tr><td>${c.name}</td><td class='right'>${fmt(c.price)}</td><td class='right'>${fmt(c.qty)}</td><td class='right'>${fmt(c.sub)}</td><td><button class='btn-ghost' onclick='removeCart(${i})'>Hapus</button></td></tr>`).join('');
       document.getElementById('tblCart').innerHTML = rows || `<tr><td colspan='5' class='muted'>Belum ada item</td></tr>`;
-      const tot = cart.reduce((a,b)=>a+b.sub,0); document.getElementById('cartTotal').textContent = fmt(tot);
+      const subtotal = cart.reduce((a,b)=>a+b.sub,0); 
+      document.getElementById('cartSubtotal').textContent = fmt(subtotal);
     }
+    
+    function updatePaymentSummary(){
+      const subtotal = cart.reduce((a,b)=>a+b.sub,0);
+      const discount = Number(document.getElementById('payDiscount').value||0);
+      const total = Math.max(0, subtotal - discount);
+      const cash = Number(document.getElementById('payCash').value||0);
+      const change = Math.max(0, cash - total);
+      
+      document.getElementById('summarySubtotal').textContent = 'Rp ' + fmt(subtotal);
+      document.getElementById('summaryDiscount').textContent = 'Rp ' + fmt(discount);
+      document.getElementById('summaryTotal').textContent = 'Rp ' + fmt(total);
+      document.getElementById('summaryCash').textContent = 'Rp ' + fmt(cash);
+      
+      const changeDisplay = document.getElementById('changeDisplay');
+      const changeAmount = document.getElementById('changeAmount');
+      const checkoutBtn = document.getElementById('checkoutBtn');
+      
+      if(cash >= total && total > 0){
+        changeDisplay.style.display = 'block';
+        changeAmount.textContent = 'Rp ' + fmt(change);
+        checkoutBtn.disabled = false;
+        checkoutBtn.textContent = 'Bayar & Cetak';
+      } else if(cash > 0 && cash < total) {
+        changeDisplay.style.display = 'none';
+        checkoutBtn.disabled = true;
+        checkoutBtn.textContent = 'Tunai Kurang Rp ' + fmt(total - cash);
+      } else {
+        changeDisplay.style.display = 'none';
+        checkoutBtn.disabled = true;
+        checkoutBtn.textContent = 'Bayar & Cetak';
+      }
+    }
+    
     function checkout(){
       if(cart.length===0) return alert('Keranjang kosong');
       if(!session) return alert('Harus login');
-      const prods = store.get('products',[]);
-      // cek stok cukup
-      for(const it of cart){ const p=prods.find(x=>x.id===it.pid); if(!p|| (p.stock||0)<it.qty) return alert('Stok tidak cukup untuk '+it.name) }
+      
+      const subtotal = cart.reduce((a,b)=>a+b.sub,0);
+      const discount = Number(document.getElementById('payDiscount').value||0);
+      const total = Math.max(0, subtotal - discount);
       const cash = Number(document.getElementById('payCash').value||0);
       const note = document.getElementById('payNote').value||'';
-      const total = cart.reduce((a,b)=>a+b.sub,0);
-      if(cash<total) return alert('Tunai kurang');
+      
+      if(cash < total) return alert('Tunai kurang');
+      
+      const prods = store.get('products',[]);
+      // cek stok cukup
+      for(const it of cart){ 
+        const p=prods.find(x=>x.id===it.pid); 
+        if(!p|| (p.stock||0)<it.qty) return alert('Stok tidak cukup untuk '+it.name) 
+      }
+      
       // kurangi stok
-      for(const it of cart){ const p=prods.find(x=>x.id===it.pid); p.stock -= it.qty; }
+      for(const it of cart){ 
+        const p=prods.find(x=>x.id===it.pid); 
+        p.stock -= it.qty; 
+      }
       store.set('products',prods);
+      
       // simpan transaksi
-      const sale = {id:uid('SALE'),ts:now(),cashier:session.name,total,items:cart,note};
-      const sales = store.get('sales',[]); sales.push(sale); store.set('sales',sales);
+      const sale = {
+        id:uid('SALE'),
+        ts:now(),
+        cashier:session.name,
+        subtotal,
+        discount,
+        total,
+        items:cart,
+        note,
+        cash
+      };
+      const sales = store.get('sales',[]); 
+      sales.push(sale); 
+      store.set('sales',sales);
+      
       // cetak
-      printSale(sale,cash);
+      printSale(sale);
+      
       // reset UI
       resetCartUI();
       alert('Transaksi berhasil');
     }
-    function printSale(sale,cash){
+    
+    
+    function printSale(sale){
       const body = document.getElementById('prnBody');
       body.innerHTML = sale.items.map(it=>`<tr><td>${it.name}</td><td class='right'>${fmt(it.qty)}</td><td class='right'>${fmt(it.price)}</td><td class='right'>${fmt(it.sub)}</td></tr>`).join('');
       document.getElementById('prnMeta').textContent = `${new Date(sale.ts).toLocaleString('id-ID')} · Kasir: ${sale.cashier} · ID: ${sale.id}`;
+      document.getElementById('prnSubtotal').textContent = fmt(sale.subtotal);
+      document.getElementById('prnDiscount').textContent = fmt(sale.discount || 0);
       document.getElementById('prnTotal').textContent = fmt(sale.total);
-      document.getElementById('prnCash').textContent = fmt(cash);
-      document.getElementById('prnChange').textContent = fmt(cash - sale.total);
+      document.getElementById('prnCash').textContent = fmt(sale.cash);
+      document.getElementById('prnChange').textContent = fmt((sale.cash || 0) - sale.total);
       window.print();
     }
 
@@ -488,13 +617,18 @@
       </tr>`).join('');
       document.getElementById('tblSales').innerHTML = rows || `<tr><td colspan='6' class='muted'>Belum ada transaksi</td></tr>`;
     }
+    
     function reprint(id){
-      const s = store.get('sales',[]).find(x=>x.id===id); if(!s) return;
-      printSale(s, s.total); // assume cash==total for reprint; sesuaikan bila simpan cash di data
+      const s = store.get('sales',[]).find(x=>x.id===id); 
+      if(!s) return;
+      printSale(s);
     }
+    
     function removeSale(id){
       if(!confirm('Hapus transaksi ini? Stok TIDAK otomatis kembali.')) return;
-      const list = store.get('sales',[]).filter(x=>x.id!==id); store.set('sales',list); renderSales();
+      const list = store.get('sales',[]).filter(x=>x.id!==id); 
+      store.set('sales',list); 
+      renderSales();
     }
 
     // === OPNAME ===
@@ -507,6 +641,7 @@
       </tr>`).join('');
       document.getElementById('tblOpname').innerHTML = rows || `<tr><td colspan='3' class='muted'>Belum ada produk</td></tr>`;
     }
+    
     function applyOpname(){
       const prods = store.get('products',[]);
       let adjCount=0;
@@ -534,5 +669,10 @@
     if(store.get('session')){ session = store.get('session'); go('sec-menu'); }
     setLoginState();
   </script>
+  <footer>
+    Powered by <b>KKN 17 Desa Narawita 2025</b><br>
+    Universitas Ma'soem
+  </footer>
+
 </body>
 </html>
