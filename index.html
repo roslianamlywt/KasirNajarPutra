@@ -11,15 +11,15 @@
       background: #f5f5f5;
     }
     .container {
-      max-width: 400px;
-      margin: 80px auto;
+      max-width: 500px;
+      margin: 40px auto;
       padding: 20px;
       background: white;
       border-radius: 10px;
       box-shadow: 0 4px 10px rgba(0,0,0,0.1);
     }
     h2 { text-align: center; margin-bottom: 20px; }
-    input, button {
+    input, button, select {
       width: 100%;
       padding: 10px;
       margin: 5px 0;
@@ -41,6 +41,17 @@
       background: #1e7e34;
     }
     .hidden { display: none; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+    table, th, td {
+      border: 1px solid #ccc;
+      padding: 8px;
+      text-align: center;
+    }
+    th { background: #f0f0f0; }
   </style>
 </head>
 <body>
@@ -67,46 +78,89 @@
     </div>
   </div>
 
-  <!-- Placeholder Halaman -->
-  <div class="container hidden" id="pageContent">
-    <h2 id="pageTitle"></h2>
-    <p>Konten halaman akan ditambahkan nanti...</p>
-    <button onclick="backToMenu()">⬅️ Kembali ke Menu</button>
+  <!-- Barang Masuk -->
+  <div class="container hidden" id="barangMasuk">
+    <h2>Barang Masuk</h2>
+    <input type="text" id="namaBarangMasuk" placeholder="Nama Barang" required>
+    <input type="number" id="stokMasuk" placeholder="Jumlah Masuk" required>
+    <input type="number" id="hargaBarang" placeholder="Harga per Unit" required>
+    <button onclick="tambahBarangMasuk()">➕ Tambah Barang</button>
+    <button onclick="backToMenu()">⬅️ Kembali</button>
+  </div>
+
+  <!-- Barang Keluar -->
+  <div class="container hidden" id="barangKeluar">
+    <h2>Barang Keluar</h2>
+    <input type="text" id="namaBarangKeluar" placeholder="Nama Barang" required>
+    <input type="number" id="stokKeluar" placeholder="Jumlah Keluar" required>
+    <button onclick="tambahBarangKeluar()">➖ Kurangi Stok</button>
+    <button onclick="backToMenu()">⬅️ Kembali</button>
+  </div>
+
+  <!-- Transaksi Kasir -->
+  <div class="container hidden" id="kasir">
+    <h2>Transaksi Kasir</h2>
+    <input type="text" id="namaBarangKasir" placeholder="Nama Barang" required>
+    <input type="number" id="jumlahBeli" placeholder="Jumlah Beli" required>
+    <button onclick="prosesTransaksi()">💳 Proses Transaksi</button>
+    <p id="totalTransaksi"></p>
+    <button onclick="backToMenu()">⬅️ Kembali</button>
+  </div>
+
+  <!-- Daftar Transaksi -->
+  <div class="container hidden" id="daftarTransaksi">
+    <h2>Daftar Transaksi</h2>
+    <table>
+      <thead>
+        <tr><th>Barang</th><th>Jumlah</th><th>Total Harga</th><th>Tanggal</th></tr>
+      </thead>
+      <tbody id="tabelTransaksi"></tbody>
+    </table>
+    <button onclick="loadTransaksi()">🔄 Refresh</button>
+    <button onclick="backToMenu()">⬅️ Kembali</button>
+  </div>
+
+  <!-- Stok Opname -->
+  <div class="container hidden" id="stokOpname">
+    <h2>Stok Opname</h2>
+    <table>
+      <thead>
+        <tr><th>Barang</th><th>Stok</th><th>Harga</th></tr>
+      </thead>
+      <tbody id="tabelStok"></tbody>
+    </table>
+    <button onclick="loadStok()">🔄 Refresh</button>
+    <button onclick="backToMenu()">⬅️ Kembali</button>
   </div>
 
   <script type="module">
-    // --- Import Firebase ---
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
-    import { getFirestore, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+    import { getFirestore, collection, query, where, getDocs, addDoc, updateDoc, doc, getDoc } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
 
-    // --- Konfigurasi Firebase (ganti dengan punyamu) ---
     const firebaseConfig = {
-     apiKey: "AIzaSyAJexdQUpqkeg24nAPJ1rv76f62DhZmu2g",
-  authDomain: "kasirnajarputra-6731e.firebaseapp.com",
-  projectId: "kasirnajarputra-6731e",
-  storageBucket: "kasirnajarputra-6731e.firebasestorage.app",
-  messagingSenderId: "271162396307",
-  appId: "1:271162396307:web:5d07b2d2b05fe037420766",
-  measurementId: "G-8LSYG7VBQ5"
+      apiKey: "AIzaSyAJexdQUpqkeg24nAPJ1rv76f62DhZmu2g",
+      authDomain: "kasirnajarputra-6731e.firebaseapp.com",
+      projectId: "kasirnajarputra-6731e",
+      storageBucket: "kasirnajarputra-6731e.firebasestorage.app",
+      messagingSenderId: "271162396307",
+      appId: "1:271162396307:web:5d07b2d2b05fe037420766",
+      measurementId: "G-8LSYG7VBQ5"
     };
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    // --- Login Logic ---
+    // --- Login ---
     const loginForm = document.getElementById("loginForm");
     loginForm.addEventListener("submit", async (e) => {
       e.preventDefault();
       const username = document.getElementById("username").value.trim();
       const password = document.getElementById("password").value.trim();
 
-      const q = query(collection(db, "users"), 
-                      where("username", "==", username), 
-                      where("password", "==", password));
+      const q = query(collection(db, "users"), where("username", "==", username), where("password", "==", password));
       const querySnapshot = await getDocs(q);
 
       if (!querySnapshot.empty) {
-        // login sukses
         document.getElementById("loginPage").classList.add("hidden");
         document.getElementById("menuPage").classList.remove("hidden");
       } else {
@@ -114,30 +168,110 @@
       }
     });
 
-    // --- Navigasi ---
-    function showPage(pageName) {
-      document.getElementById("menuPage").classList.add("hidden");
-      document.getElementById("pageContent").classList.remove("hidden");
-      document.getElementById("pageTitle").innerText = pageName;
+    // --- Barang Masuk ---
+    async function tambahBarangMasuk() {
+      const nama = document.getElementById("namaBarangMasuk").value;
+      const stok = parseInt(document.getElementById("stokMasuk").value);
+      const harga = parseInt(document.getElementById("hargaBarang").value);
+
+      if (!nama || !stok || !harga) { alert("Lengkapi semua data!"); return; }
+
+      await addDoc(collection(db, "barang"), { nama, stok, harga });
+      alert("✅ Barang ditambahkan!");
     }
 
+    // --- Barang Keluar ---
+    async function tambahBarangKeluar() {
+      const nama = document.getElementById("namaBarangKeluar").value;
+      const jumlah = parseInt(document.getElementById("stokKeluar").value);
+
+      const q = query(collection(db, "barang"), where("nama", "==", nama));
+      const snapshot = await getDocs(q);
+
+      if (snapshot.empty) { alert("❌ Barang tidak ditemukan"); return; }
+      const docRef = snapshot.docs[0].ref;
+      const data = snapshot.docs[0].data();
+
+      if (data.stok < jumlah) { alert("❌ Stok tidak cukup"); return; }
+
+      await updateDoc(docRef, { stok: data.stok - jumlah });
+      alert("✅ Barang keluar dicatat!");
+    }
+
+    // --- Transaksi Kasir ---
+    async function prosesTransaksi() {
+      const nama = document.getElementById("namaBarangKasir").value;
+      const jumlah = parseInt(document.getElementById("jumlahBeli").value);
+
+      const q = query(collection(db, "barang"), where("nama", "==", nama));
+      const snapshot = await getDocs(q);
+
+      if (snapshot.empty) { alert("❌ Barang tidak ditemukan"); return; }
+      const docRef = snapshot.docs[0].ref;
+      const data = snapshot.docs[0].data();
+
+      if (data.stok < jumlah) { alert("❌ Stok tidak cukup"); return; }
+
+      const total = jumlah * data.harga;
+      await updateDoc(docRef, { stok: data.stok - jumlah });
+
+      await addDoc(collection(db, "transaksi"), {
+        namaBarang: nama,
+        jumlah,
+        total,
+        tanggal: new Date().toLocaleString()
+      });
+
+      document.getElementById("totalTransaksi").innerText = `Total: Rp ${total}`;
+      alert("✅ Transaksi berhasil!");
+    }
+
+    // --- Daftar Transaksi ---
+    async function loadTransaksi() {
+      const snapshot = await getDocs(collection(db, "transaksi"));
+      const tbody = document.getElementById("tabelTransaksi");
+      tbody.innerHTML = "";
+      snapshot.forEach(doc => {
+        const t = doc.data();
+        tbody.innerHTML += `<tr><td>${t.namaBarang}</td><td>${t.jumlah}</td><td>Rp ${t.total}</td><td>${t.tanggal}</td></tr>`;
+      });
+    }
+
+    // --- Stok Opname ---
+    async function loadStok() {
+      const snapshot = await getDocs(collection(db, "barang"));
+      const tbody = document.getElementById("tabelStok");
+      tbody.innerHTML = "";
+      snapshot.forEach(doc => {
+        const b = doc.data();
+        tbody.innerHTML += `<tr><td>${b.nama}</td><td>${b.stok}</td><td>Rp ${b.harga}</td></tr>`;
+      });
+    }
+
+    // --- Navigasi ---
+    function showPage(id) {
+      document.getElementById("menuPage").classList.add("hidden");
+      document.querySelectorAll(".container").forEach(c => c.classList.add("hidden"));
+      document.getElementById(id).classList.remove("hidden");
+    }
     function backToMenu() {
-      document.getElementById("pageContent").classList.add("hidden");
+      document.querySelectorAll(".container").forEach(c => c.classList.add("hidden"));
       document.getElementById("menuPage").classList.remove("hidden");
     }
-
     function logout() {
-      document.getElementById("menuPage").classList.add("hidden");
-      document.getElementById("pageContent").classList.add("hidden");
+      document.querySelectorAll(".container").forEach(c => c.classList.add("hidden"));
       document.getElementById("loginPage").classList.remove("hidden");
       loginForm.reset();
     }
 
-    // Biar bisa dipanggil dari HTML
     window.showPage = showPage;
     window.backToMenu = backToMenu;
     window.logout = logout;
+    window.tambahBarangMasuk = tambahBarangMasuk;
+    window.tambahBarangKeluar = tambahBarangKeluar;
+    window.prosesTransaksi = prosesTransaksi;
+    window.loadTransaksi = loadTransaksi;
+    window.loadStok = loadStok;
   </script>
 </body>
 </html>
-
