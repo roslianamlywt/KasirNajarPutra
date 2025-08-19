@@ -59,6 +59,46 @@
     }
   </style>
 </head>
+  <script type="module">
+  // Import Firebase
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+  import { getFirestore, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+
+  // Konfigurasi Firebase (isi dari Firebase Console)
+  const firebaseConfig = {
+    apiKey: "API_KEY",
+    authDomain: "PROJECT_ID.firebaseapp.com",
+    projectId: "PROJECT_ID",
+    storageBucket: "PROJECT_ID.appspot.com",
+    messagingSenderId: "SENDER_ID",
+    appId: "APP_ID"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+  // Login form
+  const loginForm = document.getElementById("loginForm");
+  loginForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const username = document.getElementById("username").value;
+    const password = document.getElementById("password").value;
+
+    // Cek ke Firestore
+    const q = query(collection(db, "users"), where("username", "==", username), where("password", "==", password));
+    const querySnapshot = await getDocs(q);
+
+    if (!querySnapshot.empty) {
+      // Login sukses
+      alert("Login berhasil!");
+      document.getElementById("loginPage").style.display = "none";
+      document.getElementById("menuPage").style.display = "block";
+    } else {
+      alert("Username atau password salah!");
+    }
+  });
+</script>
+
 <body>
   <header>
     <h1>Toko Bangunan Najar Putra</h1>
@@ -535,3 +575,4 @@
   </script>
 </body>
 </html>
+
