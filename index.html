@@ -1,578 +1,141 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Kasir Toko Bangunan Najar Putra</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Aplikasi Kasir - Toko Bangunan</title>
   <style>
-    :root{--bg:#f6f7fb;--card:#ffffff;--pri:#2563eb;--ok:#16a34a;--warn:#ea580c;--bad:#dc2626;--muted:#6b7280}
-    *{box-sizing:border-box}
-    body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,'Helvetica Neue',Arial,'Noto Sans',sans-serif;background:var(--bg);color:#111}
-    header{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:var(--card);border-bottom:1px solid #e5e7eb;position:sticky;top:0;z-index:10}
-    header h1{font-size:18px;margin:0}
-    header .user{font-size:14px;color:var(--muted)}
-    .wrap{max-width:1050px;margin:18px auto;padding:0 16px}
-    .card{background:var(--card);border:1px solid #e5e7eb;border-radius:14px;box-shadow:0 4px 16px rgba(0,0,0,.04)}
-    .p16{padding:16px}
-    .grid{display:grid;gap:12px}
-    .grid-2{grid-template-columns:repeat(2,minmax(0,1fr))}
-    .grid-3{grid-template-columns:repeat(3,minmax(0,1fr))}
-    @media(max-width:860px){.grid-2,.grid-3{grid-template-columns:1fr}}
-    input,select,button,textarea{width:100%;padding:10px 12px;border-radius:10px;border:1px solid #e5e7eb;background:#fff}
-    input:focus,select:focus,textarea:focus{outline:none;border-color:var(--pri);box-shadow:0 0 0 3px rgba(37,99,235,.12)}
-    button{cursor:pointer;transition:.15s}
-    .btn{background:var(--pri);color:#fff;border-color:transparent}
-    .btn:hover{filter:brightness(.95)}
-    .btn-ok{background:var(--ok)}
-    .btn-warn{background:var(--warn)}
-    .btn-bad{background:var(--bad)}
-    .btn-ghost{background:#fff;border:1px solid #e5e7eb;color:#111}
-    .row{display:flex;gap:8px;align-items:center}
-    .row.wrap{flex-wrap:wrap}
-    .mt8{margin-top:8px}.mt12{margin-top:12px}.mt16{margin-top:16px}.mt20{margin-top:20px}
-    .title{font-weight:700;margin:0 0 8px}
-    table{width:100%;border-collapse:collapse}
-    th,td{border-bottom:1px solid #f1f5f9;padding:8px 10px;text-align:left}
-    thead th{background:#f8fafc;font-size:13px;color:#334155}
-    tfoot td{font-weight:700}
-    .right{text-align:right}
-    .muted{color:var(--muted)}
-    .chip{display:inline-flex;align-items:center;gap:6px;background:#f1f5f9;border:1px solid #e5e7eb;border-radius:999px;padding:4px 10px;font-size:12px}
-
-    /* sections */
-    section{display:none}
-    section.active{display:block}
-
-    /* login */
-    .login{max-width:400px;margin:8vh auto}
-    .brand{font-size:22px;font-weight:800;margin-bottom:8px}
-
-    /* print styles for thermal receipt */
-    #printArea{display:none}
-    @media print{
-      body *{visibility:hidden}
-      #printArea, #printArea *{visibility:visible}
-      #printArea{position:absolute;left:0;top:0;width:58mm;/* ganti ke 80mm jika printer 80mm */ padding:6px;font-family:monospace;font-size:12px;background:#fff}
-      #printArea h3,#printArea p{margin:0 0 6px}
-      #printArea table{width:100%}
-      #printArea th,#printArea td{border:none;padding:2px 0;font-size:12px}
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0; padding: 0;
+      background: #f5f5f5;
     }
+    .container {
+      max-width: 400px;
+      margin: 80px auto;
+      padding: 20px;
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+    h2 { text-align: center; margin-bottom: 20px; }
+    input, button {
+      width: 100%;
+      padding: 10px;
+      margin: 5px 0;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+    }
+    button {
+      background: #007bff;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    button:hover { background: #0056b3; }
+    .menu button {
+      margin: 8px 0;
+      background: #28a745;
+    }
+    .menu button:hover {
+      background: #1e7e34;
+    }
+    .hidden { display: none; }
   </style>
 </head>
-  <script type="module">
-  // Import Firebase
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
-  import { getFirestore, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
-
-  // Konfigurasi Firebase (isi dari Firebase Console)
-  const firebaseConfig = {
-    apiKey: "API_KEY",
-    authDomain: "PROJECT_ID.firebaseapp.com",
-    projectId: "PROJECT_ID",
-    storageBucket: "PROJECT_ID.appspot.com",
-    messagingSenderId: "SENDER_ID",
-    appId: "APP_ID"
-  };
-
-  const app = initializeApp(firebaseConfig);
-  const db = getFirestore(app);
-
-  // Login form
-  const loginForm = document.getElementById("loginForm");
-  loginForm.addEventListener("submit", async (e) => {
-    e.preventDefault();
-    const username = document.getElementById("username").value;
-    const password = document.getElementById("password").value;
-
-    // Cek ke Firestore
-    const q = query(collection(db, "users"), where("username", "==", username), where("password", "==", password));
-    const querySnapshot = await getDocs(q);
-
-    if (!querySnapshot.empty) {
-      // Login sukses
-      alert("Login berhasil!");
-      document.getElementById("loginPage").style.display = "none";
-      document.getElementById("menuPage").style.display = "block";
-    } else {
-      alert("Username atau password salah!");
-    }
-  });
-</script>
-
 <body>
-  <header>
-    <h1>Toko Bangunan Najar Putra</h1>
-    <div class="row">
-      <span class="chip"><span id="loginState">Belum login</span></span>
-      <button id="btnLogout" class="btn-bad" style="display:none" onclick="logout()">Logout</button>
+  <!-- Login Page -->
+  <div class="container" id="loginPage">
+    <h2>Login Kasir</h2>
+    <form id="loginForm">
+      <input type="text" id="username" placeholder="Username" required>
+      <input type="password" id="password" placeholder="Password" required>
+      <button type="submit">Login</button>
+    </form>
+  </div>
+
+  <!-- Menu Page -->
+  <div class="container hidden" id="menuPage">
+    <h2>Menu Utama</h2>
+    <div class="menu">
+      <button onclick="showPage('barangMasuk')">📥 Barang Masuk</button>
+      <button onclick="showPage('barangKeluar')">📤 Barang Keluar</button>
+      <button onclick="showPage('kasir')">💰 Transaksi Kasir</button>
+      <button onclick="showPage('daftarTransaksi')">📑 Daftar Transaksi</button>
+      <button onclick="showPage('stokOpname')">📦 Stok Opname</button>
+      <button onclick="logout()">🚪 Logout</button>
     </div>
-  </header>
-
-  <div class="wrap">
-
-    <!-- LOGIN -->
-    <section id="sec-login" class="active">
-      <div class="card p16 login">
-        <div class="brand">Selamat Datang</div>
-        <div class="grid">
-          <input id="inUser" placeholder="Username" />
-          <input id="inPass" type="password" placeholder="Password" />
-          <button class="btn" onclick="login()">Login</button>
-        </div>
-      </div>
-    </section>
-
-    <!-- MENU -->
-    <section id="sec-menu">
-      <div class="card p16">
-        <h2 class="title">Menu</h2>
-        <div class="grid grid-3">
-          <button class="btn" onclick="go('sec-in')">📦 Data Barang Masuk</button>
-          <button class="btn" onclick="go('sec-out')">📤 Data Barang Keluar</button>
-          <button class="btn" onclick="go('sec-pos')">🧾 Transaksi Kasir</button>
-          <button class="btn" onclick="go('sec-sales')">📚 Daftar Transaksi</button>
-          <button class="btn" onclick="go('sec-opname')">📊 Stok Opname</button>
-          <button class="btn btn-ghost" onclick="go('sec-products')">🗂️ Master Produk</button>
-        </div>
-      </div>
-    </section>
-
-    <!-- MASTER PRODUK -->
-    <section id="sec-products">
-      <div class="card p16">
-        <div class="row wrap" style="justify-content:space-between">
-          <h2 class="title">Master Produk</h2>
-          <button class="btn btn-ghost" onclick="go('sec-menu')">⬅ Kembali</button>
-        </div>
-        <div class="grid grid-3 mt12">
-          <input id="pName" placeholder="Nama produk" />
-          <input id="pSku" placeholder="SKU / Barcode (opsional)" />
-          <input id="pPrice" type="number" placeholder="Harga Jual" />
-        </div>
-        <div class="row mt8">
-          <button class="btn-ok" onclick="addProduct()">Tambah / Update</button>
-          <input id="pSearch" placeholder="Cari produk..." oninput="renderProducts()" />
-        </div>
-        <div class="mt16">
-          <table>
-            <thead><tr><th>Nama</th><th>SKU</th><th class="right">Harga</th><th class="right">Stok</th><th>Aksi</th></tr></thead>
-            <tbody id="tblProducts"></tbody>
-          </table>
-        </div>
-      </div>
-    </section>
-
-    <!-- BARANG MASUK -->
-    <section id="sec-in">
-      <div class="card p16">
-        <div class="row wrap" style="justify-content:space-between">
-          <h2 class="title">Barang Masuk</h2>
-          <button class="btn btn-ghost" onclick="go('sec-menu')">⬅ Kembali</button>
-        </div>
-        <div class="grid grid-3 mt12">
-          <select id="inProd"></select>
-          <input id="inQty" type="number" placeholder="Qty" />
-          <input id="inNote" placeholder="Catatan (No. Nota / Supplier)" />
-        </div>
-        <div class="row mt8">
-          <button class="btn-ok" onclick="stockIn()">Tambahkan</button>
-          <button class="btn-ghost" onclick="openNewProductFrom('inProd')">+ Produk baru</button>
-        </div>
-        <div class="mt16">
-          <table>
-            <thead><tr><th>Tgl</th><th>Produk</th><th class="right">Qty</th><th>Catatan</th></tr></thead>
-            <tbody id="tblIn"></tbody>
-          </table>
-        </div>
-      </div>
-    </section>
-
-    <!-- BARANG KELUAR (PENYESUAIAN) -->
-    <section id="sec-out">
-      <div class="card p16">
-        <div class="row wrap" style="justify-content:space-between">
-          <h2 class="title">Barang Keluar / Penyesuaian</h2>
-          <button class="btn btn-ghost" onclick="go('sec-menu')">⬅ Kembali</button>
-        </div>
-        <div class="grid grid-3 mt12">
-          <select id="outProd"></select>
-          <input id="outQty" type="number" placeholder="Qty" />
-          <input id="outNote" placeholder="Alasan (rusak / hilang / lainnya)" />
-        </div>
-        <div class="row mt8">
-          <button class="btn-warn" onclick="stockOut()">Kurangi</button>
-          <button class="btn-ghost" onclick="openNewProductFrom('outProd')">+ Produk baru</button>
-        </div>
-        <div class="mt16">
-          <table>
-            <thead><tr><th>Tgl</th><th>Produk</th><th class="right">Qty</th><th>Alasan</th></tr></thead>
-            <tbody id="tblOut"></tbody>
-          </table>
-        </div>
-      </div>
-    </section>
-
-    <!-- POS / TRANSAKSI KASIR -->
-    <section id="sec-pos">
-      <div class="card p16">
-        <div class="row wrap" style="justify-content:space-between">
-          <h2 class="title">Transaksi Kasir</h2>
-          <button class="btn btn-ghost" onclick="go('sec-menu')">⬅ Kembali</button>
-        </div>
-        <div class="grid grid-3 mt12">
-          <select id="posProd"></select>
-          <input id="posPrice" type="number" placeholder="Harga" />
-          <div class="row">
-            <input id="posQty" type="number" placeholder="Qty" />
-            <button class="btn-ok" onclick="addToCart()">Tambah</button>
-          </div>
-        </div>
-        <div class="mt16">
-          <table>
-            <thead><tr><th>Produk</th><th class="right">Harga</th><th class="right">Qty</th><th class="right">Subtotal</th><th></th></tr></thead>
-            <tbody id="tblCart"></tbody>
-            <tfoot><tr><td colspan="3" class="right">Total</td><td class="right" id="cartTotal">0</td><td></td></tr></tfoot>
-          </table>
-          <div class="grid grid-3 mt12">
-            <input id="payCash" type="number" placeholder="Tunai diterima" />
-            <input id="payNote" placeholder="Catatan (opsional)" />
-            <button class="btn" onclick="checkout()">Bayar & Cetak</button>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- DAFTAR TRANSAKSI -->
-    <section id="sec-sales">
-      <div class="card p16">
-        <div class="row wrap" style="justify-content:space-between">
-          <h2 class="title">Daftar Transaksi</h2>
-          <button class="btn btn-ghost" onclick="go('sec-menu')">⬅ Kembali</button>
-        </div>
-        <div class="grid grid-3 mt12">
-          <input id="sFrom" type="date" />
-          <input id="sTo" type="date" />
-          <button class="btn-ghost" onclick="renderSales()">Filter</button>
-        </div>
-        <div class="mt16">
-          <table>
-            <thead><tr><th>Waktu</th><th>ID</th><th class="right">Item</th><th class="right">Total</th><th>Kasir</th><th>Aksi</th></tr></thead>
-            <tbody id="tblSales"></tbody>
-          </table>
-        </div>
-      </div>
-    </section>
-
-    <!-- STOK OPNAME -->
-    <section id="sec-opname">
-      <div class="card p16">
-        <div class="row wrap" style="justify-content:space-between">
-          <h2 class="title">Stok Opname</h2>
-          <button class="btn btn-ghost" onclick="go('sec-menu')">⬅ Kembali</button>
-        </div>
-        <div class="mt12">
-          <table>
-            <thead><tr><th>Produk</th><th class="right">Stok Sistem</th><th class="right">Stok Hitung</th></tr></thead>
-            <tbody id="tblOpname"></tbody>
-          </table>
-          <div class="row mt12">
-            <button class="btn" onclick="applyOpname()">Terapkan Opname</button>
-          </div>
-        </div>
-      </div>
-    </section>
   </div>
 
-  <!-- PRINT AREA (THERMAL) -->
-  <div id="printArea">
-    <h3 style="text-align:center">TOKO BANGUNAN</h3>
-    <p style="text-align:center">Jl. Contoh 123 · 0812-3456-7890</p>
-    <p id="prnMeta"></p>
-    <table>
-      <thead><tr><th>Item</th><th class="right">Qty</th><th class="right">Harga</th><th class="right">Sub</th></tr></thead>
-      <tbody id="prnBody"></tbody>
-    </table>
-    <hr />
-    <table>
-      <tbody>
-        <tr><td><b>Total</b></td><td class="right" id="prnTotal"></td></tr>
-        <tr><td>Tunai</td><td class="right" id="prnCash"></td></tr>
-        <tr><td>Kembali</td><td class="right" id="prnChange"></td></tr>
-      </tbody>
-    </table>
-    <p style="text-align:center">Terima kasih 🙏</p>
+  <!-- Placeholder Halaman -->
+  <div class="container hidden" id="pageContent">
+    <h2 id="pageTitle"></h2>
+    <p>Konten halaman akan ditambahkan nanti...</p>
+    <button onclick="backToMenu()">⬅️ Kembali ke Menu</button>
   </div>
 
-  <script>
-    // === UTIL & STORAGE ===
-    const fmt = n => Number(n||0).toLocaleString('id-ID');
-    const now = () => new Date().toISOString();
-    const uid = (p='TX') => p + Math.random().toString(36).slice(2,8).toUpperCase();
+  <script type="module">
+    // --- Import Firebase ---
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+    import { getFirestore, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
 
-    const store = {
-      get(k, d){try{return JSON.parse(localStorage.getItem(k)) ?? d}catch{ return d}},
-      set(k, v){localStorage.setItem(k, JSON.stringify(v))}
-    }
+    // --- Konfigurasi Firebase (ganti dengan punyamu) ---
+    const firebaseConfig = {
+      apiKey: "API_KEY",
+      authDomain: "PROJECT_ID.firebaseapp.com",
+      projectId: "PROJECT_ID",
+      storageBucket: "PROJECT_ID.appspot.com",
+      messagingSenderId: "SENDER_ID",
+      appId: "APP_ID"
+    };
 
-    // Default seed
-    if(!store.get('users')) store.set('users',[{u:'kasir',p:'1234',name:'Kasir Demo'}]);
-    if(!store.get('products')) store.set('products',[]);
-    if(!store.get('stockIn')) store.set('stockIn',[]);
-    if(!store.get('stockOut')) store.set('stockOut',[]);
-    if(!store.get('sales')) store.set('sales',[]);
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
 
-    let session = store.get('session', null);
+    // --- Login Logic ---
+    const loginForm = document.getElementById("loginForm");
+    loginForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const username = document.getElementById("username").value.trim();
+      const password = document.getElementById("password").value.trim();
 
-    function setLoginState(){
-      const el = document.getElementById('loginState');
-      const btn = document.getElementById('btnLogout');
-      if(session){ el.textContent = `Login: ${session.name}`; btn.style.display='inline-flex'; }
-      else { el.textContent = 'Belum login'; btn.style.display='none'; }
-    }
+      const q = query(collection(db, "users"), 
+                      where("username", "==", username), 
+                      where("password", "==", password));
+      const querySnapshot = await getDocs(q);
 
-    // === NAVIGATION ===
-    function go(id){
-      document.querySelectorAll('section').forEach(s=>s.classList.remove('active'));
-      document.getElementById(id).classList.add('active');
-      // refresh dropdowns/tables when entering a page
-      if(id==='sec-menu'){}
-      if(id==='sec-products') renderProducts();
-      if(id==='sec-in'){fillProductSelect('inProd'); renderIn();}
-      if(id==='sec-out'){fillProductSelect('outProd'); renderOut();}
-      if(id==='sec-pos'){fillProductSelect('posProd'); resetCartUI();}
-      if(id==='sec-sales') renderSales();
-      if(id==='sec-opname') renderOpname();
-      window.scrollTo(0,0);
-    }
-
-    // === AUTH ===
-    function login(){
-      const u = document.getElementById('inUser').value.trim();
-      const p = document.getElementById('inPass').value.trim();
-      const users = store.get('users',[]);
-      const found = users.find(x=>x.u===u && x.p===p);
-      if(!found){ alert('Username atau password salah'); return; }
-      session = {u:found.u,name:found.name||found.u,ts:now()};
-      store.set('session', session);
-      setLoginState();
-      document.getElementById('sec-login').classList.remove('active');
-      document.getElementById('sec-menu').classList.add('active');
-    }
-    function logout(){ session=null; localStorage.removeItem('session'); setLoginState(); go('sec-login'); }
-
-    // === PRODUCTS ===
-    function renderProducts(){
-      const q = (document.getElementById('pSearch').value||'').toLowerCase();
-      const rows = store.get('products',[])
-        .filter(p=>!q || p.name.toLowerCase().includes(q) || (p.sku||'').toLowerCase().includes(q))
-        .map(p=>`<tr>
-          <td>${p.name}</td>
-          <td>${p.sku||''}</td>
-          <td class='right'>${fmt(p.price)}</td>
-          <td class='right'>${fmt(p.stock||0)}</td>
-          <td class='row'><button class='btn-ghost' onclick="editProduct('${p.id}')">Edit</button>
-              <button class='btn-bad' onclick="delProduct('${p.id}')">Hapus</button></td>
-        </tr>`).join('');
-      document.getElementById('tblProducts').innerHTML = rows || `<tr><td colspan='5' class='muted'>Belum ada data</td></tr>`;
-    }
-    function addProduct(){
-      let name = document.getElementById('pName').value.trim();
-      let sku  = document.getElementById('pSku').value.trim();
-      let price= Number(document.getElementById('pPrice').value||0);
-      if(!name){alert('Nama produk wajib');return}
-      const list = store.get('products',[]);
-      // update if exists by name or sku
-      let p = list.find(x=>x.name.toLowerCase()===name.toLowerCase() || (sku && x.sku===sku));
-      if(p){ p.name=name; p.sku=sku; p.price=price; }
-      else { p={id:uid('PRD'),name,sku,price,stock:0}; list.push(p); }
-      store.set('products',list);
-      document.getElementById('pName').value=''; document.getElementById('pSku').value=''; document.getElementById('pPrice').value='';
-      renderProducts();
-      alert('Produk disimpan');
-    }
-    function editProduct(id){
-      const p = store.get('products',[]).find(x=>x.id===id); if(!p) return;
-      document.getElementById('pName').value=p.name;
-      document.getElementById('pSku').value=p.sku||'';
-      document.getElementById('pPrice').value=p.price||0;
-      window.scrollTo(0,0);
-    }
-    function delProduct(id){
-      if(!confirm('Hapus produk ini?')) return;
-      let list = store.get('products',[]).filter(p=>p.id!==id);
-      store.set('products',list); renderProducts();
-    }
-    function fillProductSelect(selId){
-      const sel = document.getElementById(selId);
-      const list = store.get('products',[]);
-      sel.innerHTML = list.map(p=>`<option value='${p.id}' data-price='${p.price||0}'>${p.name}</option>`).join('');
-      // auto fill price when used in POS
-      if(selId==='posProd'){
-        const priceEl = document.getElementById('posPrice');
-        sel.onchange = () => { priceEl.value = Number(sel.selectedOptions[0]?.dataset.price||0) };
-        priceEl.value = Number(sel.selectedOptions[0]?.dataset.price||0);
+      if (!querySnapshot.empty) {
+        // login sukses
+        document.getElementById("loginPage").classList.add("hidden");
+        document.getElementById("menuPage").classList.remove("hidden");
+      } else {
+        alert("❌ Username atau password salah!");
       }
-    }
-    function openNewProductFrom(backSel){
-      go('sec-products');
-      setTimeout(()=>document.getElementById('pName').focus(),100);
+    });
+
+    // --- Navigasi ---
+    function showPage(pageName) {
+      document.getElementById("menuPage").classList.add("hidden");
+      document.getElementById("pageContent").classList.remove("hidden");
+      document.getElementById("pageTitle").innerText = pageName;
     }
 
-    // === STOCK IN ===
-    function stockIn(){
-      const pid = document.getElementById('inProd').value; if(!pid) return alert('Pilih produk');
-      const qty = Number(document.getElementById('inQty').value||0); if(qty<=0) return alert('Qty > 0');
-      const note= document.getElementById('inNote').value||'';
-      const rec = {id:uid('IN'),pid,qty,ts:now(),note};
-      const ins = store.get('stockIn',[]); ins.push(rec); store.set('stockIn',ins);
-      const prods = store.get('products',[]); const p=prods.find(x=>x.id===pid); if(p){p.stock=(p.stock||0)+qty; store.set('products',prods);} 
-      document.getElementById('inQty').value=''; document.getElementById('inNote').value='';
-      renderIn(); alert('Barang masuk dicatat');
-    }
-    function renderIn(){
-      const ins = store.get('stockIn',[]).slice().reverse();
-      const prods = store.get('products',[]);
-      const rows = ins.map(r=>`<tr><td>${new Date(r.ts).toLocaleString('id-ID')}</td><td>${prods.find(p=>p.id===r.pid)?.name||'?'}</td><td class='right'>${fmt(r.qty)}</td><td>${r.note||''}</td></tr>`).join('');
-      document.getElementById('tblIn').innerHTML = rows || `<tr><td colspan='4' class='muted'>Belum ada data</td></tr>`;
+    function backToMenu() {
+      document.getElementById("pageContent").classList.add("hidden");
+      document.getElementById("menuPage").classList.remove("hidden");
     }
 
-    // === STOCK OUT ===
-    function stockOut(){
-      const pid = document.getElementById('outProd').value; if(!pid) return alert('Pilih produk');
-      const qty = Number(document.getElementById('outQty').value||0); if(qty<=0) return alert('Qty > 0');
-      const note= document.getElementById('outNote').value||'';
-      const prods = store.get('products',[]); const p=prods.find(x=>x.id===pid); if(!p) return; if((p.stock||0)<qty) return alert('Stok tidak cukup');
-      const rec = {id:uid('OUT'),pid,qty,ts:now(),note};
-      const outs = store.get('stockOut',[]); outs.push(rec); store.set('stockOut',outs);
-      p.stock = (p.stock||0) - qty; store.set('products',prods);
-      document.getElementById('outQty').value=''; document.getElementById('outNote').value='';
-      renderOut(); alert('Barang keluar dicatat');
-    }
-    function renderOut(){
-      const outs = store.get('stockOut',[]).slice().reverse();
-      const prods = store.get('products',[]);
-      const rows = outs.map(r=>`<tr><td>${new Date(r.ts).toLocaleString('id-ID')}</td><td>${prods.find(p=>p.id===r.pid)?.name||'?'}</td><td class='right'>${fmt(r.qty)}</td><td>${r.note||''}</td></tr>`).join('');
-      document.getElementById('tblOut').innerHTML = rows || `<tr><td colspan='4' class='muted'>Belum ada data</td></tr>`;
+    function logout() {
+      document.getElementById("menuPage").classList.add("hidden");
+      document.getElementById("pageContent").classList.add("hidden");
+      document.getElementById("loginPage").classList.remove("hidden");
+      loginForm.reset();
     }
 
-    // === POS ===
-    let cart = [];
-    function resetCartUI(){ cart=[]; renderCart(); document.getElementById('payCash').value=''; document.getElementById('payNote').value=''; document.getElementById('posQty').value='';}
-    function addToCart(){
-      const pid = document.getElementById('posProd').value; if(!pid) return;
-      const price = Number(document.getElementById('posPrice').value||0);
-      const qty = Number(document.getElementById('posQty').value||0); if(qty<=0) return alert('Qty > 0');
-      const p = store.get('products',[]).find(x=>x.id===pid); if(!p) return;
-      cart.push({pid,name:p.name,price,qty,sub:price*qty});
-      renderCart(); document.getElementById('posQty').value='';
-    }
-    function removeCart(i){ cart.splice(i,1); renderCart(); }
-    function renderCart(){
-      const rows = cart.map((c,i)=>`<tr><td>${c.name}</td><td class='right'>${fmt(c.price)}</td><td class='right'>${fmt(c.qty)}</td><td class='right'>${fmt(c.sub)}</td><td><button class='btn-ghost' onclick='removeCart(${i})'>Hapus</button></td></tr>`).join('');
-      document.getElementById('tblCart').innerHTML = rows || `<tr><td colspan='5' class='muted'>Belum ada item</td></tr>`;
-      const tot = cart.reduce((a,b)=>a+b.sub,0); document.getElementById('cartTotal').textContent = fmt(tot);
-    }
-    function checkout(){
-      if(cart.length===0) return alert('Keranjang kosong');
-      if(!session) return alert('Harus login');
-      const prods = store.get('products',[]);
-      // cek stok cukup
-      for(const it of cart){ const p=prods.find(x=>x.id===it.pid); if(!p|| (p.stock||0)<it.qty) return alert('Stok tidak cukup untuk '+it.name) }
-      const cash = Number(document.getElementById('payCash').value||0);
-      const note = document.getElementById('payNote').value||'';
-      const total = cart.reduce((a,b)=>a+b.sub,0);
-      if(cash<total) return alert('Tunai kurang');
-      // kurangi stok
-      for(const it of cart){ const p=prods.find(x=>x.id===it.pid); p.stock -= it.qty; }
-      store.set('products',prods);
-      // simpan transaksi
-      const sale = {id:uid('SALE'),ts:now(),cashier:session.name,total,items:cart,note};
-      const sales = store.get('sales',[]); sales.push(sale); store.set('sales',sales);
-      // cetak
-      printSale(sale,cash);
-      // reset UI
-      resetCartUI();
-      alert('Transaksi berhasil');
-    }
-    function printSale(sale,cash){
-      const body = document.getElementById('prnBody');
-      body.innerHTML = sale.items.map(it=>`<tr><td>${it.name}</td><td class='right'>${fmt(it.qty)}</td><td class='right'>${fmt(it.price)}</td><td class='right'>${fmt(it.sub)}</td></tr>`).join('');
-      document.getElementById('prnMeta').textContent = `${new Date(sale.ts).toLocaleString('id-ID')} · Kasir: ${sale.cashier} · ID: ${sale.id}`;
-      document.getElementById('prnTotal').textContent = fmt(sale.total);
-      document.getElementById('prnCash').textContent = fmt(cash);
-      document.getElementById('prnChange').textContent = fmt(cash - sale.total);
-      window.print();
-    }
-
-    // === SALES LIST ===
-    function renderSales(){
-      const sales = store.get('sales',[]).slice().reverse();
-      const from = document.getElementById('sFrom').value ? new Date(document.getElementById('sFrom').value) : null;
-      const to   = document.getElementById('sTo').value   ? new Date(document.getElementById('sTo').value)   : null;
-      const rows = sales.filter(s=>{
-        const d = new Date(s.ts);
-        if(from && d < from) return false;
-        if(to){ const tend=new Date(to); tend.setHours(23,59,59,999); if(d>tend) return false; }
-        return true;
-      }).map(s=>`<tr>
-        <td>${new Date(s.ts).toLocaleString('id-ID')}</td>
-        <td>${s.id}</td>
-        <td class='right'>${fmt(s.items.length)}</td>
-        <td class='right'>${fmt(s.total)}</td>
-        <td>${s.cashier}</td>
-        <td class='row'>
-          <button class='btn-ghost' onclick="reprint('${s.id}')">Cetak</button>
-          <button class='btn-bad' onclick="removeSale('${s.id}')">Hapus</button>
-        </td>
-      </tr>`).join('');
-      document.getElementById('tblSales').innerHTML = rows || `<tr><td colspan='6' class='muted'>Belum ada transaksi</td></tr>`;
-    }
-    function reprint(id){
-      const s = store.get('sales',[]).find(x=>x.id===id); if(!s) return;
-      printSale(s, s.total); // assume cash==total for reprint; sesuaikan bila simpan cash di data
-    }
-    function removeSale(id){
-      if(!confirm('Hapus transaksi ini? Stok TIDAK otomatis kembali.')) return;
-      const list = store.get('sales',[]).filter(x=>x.id!==id); store.set('sales',list); renderSales();
-    }
-
-    // === OPNAME ===
-    function renderOpname(){
-      const prods = store.get('products',[]);
-      const rows = prods.map(p=>`<tr>
-        <td>${p.name}</td>
-        <td class='right'>${fmt(p.stock||0)}</td>
-        <td class='right'><input style='width:120px' type='number' id='op_${p.id}' placeholder='Hitung' /></td>
-      </tr>`).join('');
-      document.getElementById('tblOpname').innerHTML = rows || `<tr><td colspan='3' class='muted'>Belum ada produk</td></tr>`;
-    }
-    function applyOpname(){
-      const prods = store.get('products',[]);
-      let adjCount=0;
-      for(const p of prods){
-        const el = document.getElementById('op_'+p.id); if(!el) continue;
-        const counted = el.value===''?null:Number(el.value);
-        if(counted===null || isNaN(counted)) continue;
-        const diff = counted - (p.stock||0);
-        if(diff===0) continue;
-        if(diff>0){ // treat as stock in
-          const rec = {id:uid('IN'),pid:p.id,qty:diff,ts:now(),note:'Opname (+)'};
-          const ins = store.get('stockIn',[]); ins.push(rec); store.set('stockIn',ins);
-        }else{ // stock out
-          const rec = {id:uid('OUT'),pid:p.id,qty:Math.abs(diff),ts:now(),note:'Opname (-)'};
-          const outs = store.get('stockOut',[]); outs.push(rec); store.set('stockOut',outs);
-        }
-        p.stock = counted; adjCount++;
-      }
-      store.set('products',prods);
-      if(adjCount===0) alert('Tidak ada perubahan opname'); else alert('Opname diterapkan ke '+adjCount+' produk');
-      renderOpname();
-    }
-
-    // === INIT ===
-    if(store.get('session')){ session = store.get('session'); go('sec-menu'); }
-    setLoginState();
+    // Biar bisa dipanggil dari HTML
+    window.showPage = showPage;
+    window.backToMenu = backToMenu;
+    window.logout = logout;
   </script>
 </body>
 </html>
-
