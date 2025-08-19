@@ -250,26 +250,13 @@
   </div>
 
   <!-- FIREBASE + APP LOGIC -->
-  <script type="module">
-    // ---------- Firebase imports ----------
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
-    import {
-      getFirestore, collection, doc, addDoc, getDocs, getDoc, updateDoc, deleteDoc,
-      query, where, orderBy, serverTimestamp, runTransaction
-    } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
-
-    // ---------- Firebase config (gunakan config proyekmu) ----------
-    const firebaseConfig = {
-      apiKey: "AIzaSyAJexdQUpqkeg24nAPJ1rv76f62DhZmu2g",
-      authDomain: "kasirnajarputra-6731e.firebaseapp.com",
-      projectId: "kasirnajarputra-6731e",
-      storageBucket: "kasirnajarputra-6731e.firebasestorage.app",
-      messagingSenderId: "271162396307",
-      appId: "1:271162396307:web:5d07b2d2b05fe037420766",
-      measurementId: "G-8LSYG7VBQ5"
-    };
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
+ <script type="module"> // --- Import Firebase --- 
+   import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js"; import { getFirestore, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js"; // --- Konfigurasi Firebase (ganti dengan punyamu) --- 
+   const firebaseConfig = { apiKey: "AIzaSyAJexdQUpqkeg24nAPJ1rv76f62DhZmu2g", authDomain: "kasirnajarputra-6731e.firebaseapp.com", projectId: "kasirnajarputra-6731e", storageBucket: "kasirnajarputra-6731e.firebasestorage.app", messagingSenderId: "271162396307", appId: "1:271162396307:web:5d07b2d2b05fe037420766", measurementId: "G-8LSYG7VBQ5" }; const app = initializeApp(firebaseConfig); const db = getFirestore(app); 
+   // --- Login Logic --- 
+   const loginForm = document.getElementById("loginForm"); loginForm.addEventListener("submit", async (e) => { e.preventDefault(); const username = document.getElementById("username").value.trim(); const password = document.getElementById("password").value.trim(); const q = query(collection(db, "users"), where("username", "==", username), where("password", "==", password)); const querySnapshot = await getDocs(q); if (!querySnapshot.empty) { 
+     // login sukses 
+     document.getElementById("loginPage").classList.add("hidden"); document.getElementById("menuPage").classList.remove("hidden"); } else { alert("❌ Username atau password salah!"); } });
 
     // ---------- Utils ----------
     const fmt = n => Number(n||0).toLocaleString('id-ID');
@@ -695,4 +682,5 @@
   </script>
 </body>
 </html>
+
 
