@@ -62,16 +62,119 @@
     .total-row{border-top:2px solid #e5e7eb;padding-top:12px;margin-top:12px;font-size:18px;font-weight:700}
     .change-display{background:#dcfce7;border:1px solid #bbf7d0;color:#166534;font-size:16px;font-weight:700;text-align:center;padding:12px;border-radius:8px;margin:8px 0}
 
-    /* print styles for thermal receipt */
-    #printArea{display:none}
-    @media print{
-      body *{visibility:hidden}
-      #printArea, #printArea *{visibility:visible}
-      #printArea{position:absolute;left:0;top:0;width:58mm;/* ganti ke 80mm jika printer 80mm */ padding:6px;font-family:monospace;font-size:12px;background:#fff}
-      #printArea h3,#printArea p{margin:0 0 6px}
-      #printArea table{width:100%}
-      #printArea th,#printArea td{border:none;padding:2px 0;font-size:12px}
-    }
+   /* print styles for thermal receipt */
+#printArea { display: none; }
+
+@media print {
+  @page {
+    size: 58mm auto; 
+    margin: 0;        
+  }
+
+  body {
+    margin: 0;
+    padding: 0;
+  }
+
+  body * {
+    display: none !important;
+  }
+
+  #printArea, #printArea * {
+    display: block !important;
+    visibility: visible !important;
+  }
+
+  #printArea {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 58mm; /* ganti ke 80mm jika printer 80mm */
+    padding: 4px 6px; /* tambah padding kanan-kiri */
+    font-family: monospace;
+    font-size: 12px;
+    background: #fff;
+    box-sizing: border-box;
+  }
+
+  #printArea h3, #printArea p {
+    margin: 0 0 6px;
+  }
+
+  #printArea table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  #printArea th, #printArea td {
+    border: none;
+    padding: 2px 0;
+    font-size: 12px;
+    text-align: left;
+  }
+
+  #printArea td.right {
+    text-align: right;
+  }
+  #printArea {
+  font-family: monospace;
+  font-size: 12px;
+  text-align: center;
+}
+
+#printArea .logo {
+  display: block;
+  margin: 0 auto 4px auto;
+  width: 70px; /* atur sesuai ukuran logo */
+}
+
+#printArea h3 {
+  margin: 0;
+  font-size: 14px;
+}
+
+#printArea p {
+  margin: 2px 0;
+}
+
+#printArea .totals td {
+  padding: 2px 0;
+}
+
+#printArea .divider {
+  border-top: 1px dashed #000;
+  margin: 4px 0;
+}
+
+#printArea .footer {
+  margin-top: 6px;
+  font-size: 12px;
+  text-align: center;
+}
+}
+#printArea table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+#printArea th,
+#printArea td {
+  padding: 2px 0;
+}
+
+#printArea td.right,
+#printArea th.right {
+  text-align: right;
+}
+.login .brand {
+  text-align: center;
+  font-size: 20px; 
+  font-weight: bold;
+  margin-bottom: 12px;
+}
+
+
   </style>
 </head>
 <body>
@@ -89,7 +192,7 @@
     <!-- LOGIN -->
     <section id="sec-login" class="active">
       <div class="card p16 login">
-        <div class="brand">Kasir Toko Najar Putra</div>
+        <div class="brand"> Toko Bangunan Najar Putra</div>
         <div class="grid">
           <input id="inUser" placeholder="Username" />
           <input id="inPass" type="password" placeholder="Password" />
@@ -276,7 +379,7 @@
         </div>
         <div class="mt12">
           <table>
-            <thead><tr><th>Produk</th><th class="right">Stok Sistem</th><th class="right">Stok Hitung</th></tr></thead>
+            <thead><tr><th>Produk</th><th class="right">Stok Sistem</th><th class="right">Stok Actual</th></tr></thead>
             <tbody id="tblOpname"></tbody>
           </table>
           <div class="row mt12">
@@ -288,28 +391,30 @@
     </section>
   </div>
 
-  <!-- PRINT AREA (THERMAL) -->
-  <div id="printArea">
-    <img src="logonajar.png" alt="Logo Toko Najar Putra" width="100">
-    <h3 style="text-align:center">TOKO BANGUNAN NAJAR PUTRA</h3>
-    <p style="text-align:center">Jl. Contoh 123 · 0812-3456-7890</p>
+<!-- PRINT AREA (THERMAL) -->
+<div id="printArea">
+  <div class="header">
+    <img src="logonajar.png" alt="Logo Toko Najar Putra" width="90" class="logo">
+    <h3>TOKO BANGUNAN NAJAR PUTRA</h3>
+    <p>Kp. Cilame RT 001 RW 13 Desa Narawita Cicalengka</p>
+    <p>Telp: 0812-2398-4744</p>
+    
     <p id="prnMeta"></p>
-    <table>
-      <thead><tr><th>Item</th><th class="right">Qty</th><th class="right">Harga</th><th class="right">Sub</th></tr></thead>
-      <tbody id="prnBody"></tbody>
-    </table>
-    <hr />
-    <table>
-      <tbody>
-        <tr><td>Subtotal</td><td class="right" id="prnSubtotal"></td></tr>
-        <tr><td>Diskon</td><td class="right" id="prnDiscount"></td></tr>
-        <tr><td><b>Total</b></td><td class="right" id="prnTotal"></td></tr>
-        <tr><td>Tunai</td><td class="right" id="prnCash"></td></tr>
-        <tr><td>Kembali</td><td class="right" id="prnChange"></td></tr>
-      </tbody>
-    </table>
-    <p style="text-align:center">Terima kasih 🙏</p>
   </div>
+
+  <div class="divider"></div>
+
+  <table class="struk">
+  <tbody id="prnBody">
+  </tbody>
+
+  <!-- Divider -->
+</table>
+  <div class="divider"></div>
+
+  <p class="footer">Terima kasih 🙏<br/>Powered by KKN 17 Universitas Ma'soem Desa Narawita 2025</p>
+</div>
+
 
   <script>
     // === UTIL & STORAGE ===
@@ -584,13 +689,35 @@
     
     function printSale(sale){
       const body = document.getElementById('prnBody');
-      body.innerHTML = sale.items.map(it=>`<tr><td>${it.name}</td><td class='right'>${fmt(it.qty)}</td><td class='right'>${fmt(it.price)}</td><td class='right'>${fmt(it.sub)}</td></tr>`).join('');
-      document.getElementById('prnMeta').textContent = `${new Date(sale.ts).toLocaleString('id-ID')} · Kasir: ${sale.cashier} · ID: ${sale.id}`;
-      document.getElementById('prnSubtotal').textContent = fmt(sale.subtotal);
-      document.getElementById('prnDiscount').textContent = fmt(sale.discount || 0);
-      document.getElementById('prnTotal').textContent = fmt(sale.total);
-      document.getElementById('prnCash').textContent = fmt(sale.cash);
-      document.getElementById('prnChange').textContent = fmt((sale.cash || 0) - sale.total);
+        // baris item (2 baris per produk)
+  let rows = sale.items.map(it => `
+    <tr>
+      <td colspan="3">${it.name}</td>
+    </tr>
+    <tr>
+      <td></td>
+      <td class="right">${fmt(it.qty)} x ${fmt(it.price)}</td>
+      <td class="right">${fmt(it.sub)}</td>
+    </tr>
+  `).join('');
+// separator
+  rows += `<tr><td colspan="3"><div class="divider"></div></td></tr>`;
+
+  // baris subtotal & lainnya
+  rows += `
+    <tr><td colspan="2">Subtotal</td><td class="right">${fmt(sale.subtotal)}</td></tr>
+    <tr><td colspan="2">Diskon</td><td class="right">${fmt(sale.discount || 0)}</td></tr>
+    <tr><td colspan="2"><b>Total</b></td><td class="right"><b>${fmt(sale.total)}</b></td></tr>
+    <tr><td colspan="2">Tunai</td><td class="right">${fmt(sale.cash)}</td></tr>
+    <tr><td colspan="2">Kembali</td><td class="right">${fmt((sale.cash || 0) - sale.total)}</td></tr>
+  `;
+
+  body.innerHTML = rows;
+
+  // meta info
+  document.getElementById('prnMeta').textContent =
+    `${new Date(sale.ts).toLocaleString('id-ID')} · Kasir: ${sale.cashier} · ID: ${sale.id}`;
+
       window.print();
     }
 
@@ -673,8 +800,5 @@
     Powered by <b>KKN 17 Desa Narawita 2025</b><br>
     Universitas Ma'soem
   </footer>
-
 </body>
 </html>
-
-
