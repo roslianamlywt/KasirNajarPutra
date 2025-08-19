@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Kasir & Stok Toko Bangunan — Firebase</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Kasir & Stok Toko Bangunan</title>
   <style>
     :root{--bg:#f6f7fb;--card:#ffffff;--pri:#2563eb;--ok:#16a34a;--warn:#ea580c;--bad:#dc2626;--muted:#6b7280}
     *{box-sizing:border-box}
@@ -38,17 +38,30 @@
     .right{text-align:right}
     .muted{color:var(--muted)}
     .chip{display:inline-flex;align-items:center;gap:6px;background:#f1f5f9;border:1px solid #e5e7eb;border-radius:999px;padding:4px 10px;font-size:12px}
+
+    /* sections */
     section{display:none}
     section.active{display:block}
+
+    /* login */
     .login{max-width:400px;margin:8vh auto}
     .brand{font-size:22px;font-weight:800;margin-bottom:8px}
+
+    /* print styles for thermal receipt */
     #printArea{display:none}
-    @media print{ body *{visibility:hidden} #printArea, #printArea *{visibility:visible} #printArea{position:absolute;left:0;top:0;width:58mm;padding:6px;font-family:monospace;font-size:12px;background:#fff} #printArea h3,#printArea p{margin:0 0 6px} #printArea table{width:100%} #printArea th,#printArea td{border:none;padding:2px 0;font-size:12px} }
+    @media print{
+      body *{visibility:hidden}
+      #printArea, #printArea *{visibility:visible}
+      #printArea{position:absolute;left:0;top:0;width:58mm;/* ganti ke 80mm jika printer 80mm */ padding:6px;font-family:monospace;font-size:12px;background:#fff}
+      #printArea h3,#printArea p{margin:0 0 6px}
+      #printArea table{width:100%}
+      #printArea th,#printArea td{border:none;padding:2px 0;font-size:12px}
+    }
   </style>
 </head>
 <body>
   <header>
-    <h1>Toko Bangunan Najar Putra</h1>
+    <h1>Kasir & Stok</h1>
     <div class="row">
       <span class="chip"><span id="loginState">Belum login</span></span>
       <button id="btnLogout" class="btn-bad" style="display:none" onclick="logout()">Logout</button>
@@ -56,6 +69,7 @@
   </header>
 
   <div class="wrap">
+
     <!-- LOGIN -->
     <section id="sec-login" class="active">
       <div class="card p16 login">
@@ -64,6 +78,7 @@
           <input id="inUser" placeholder="Username" />
           <input id="inPass" type="password" placeholder="Password" />
           <button class="btn" onclick="login()">Login</button>
+          <div class="muted">Demo: <b>kasir</b> / <b>1234</b></div>
         </div>
       </div>
     </section>
@@ -96,7 +111,7 @@
           <input id="pPrice" type="number" placeholder="Harga Jual" />
         </div>
         <div class="row mt8">
-          <button class="btn-ok" onclick="addOrUpdateProduct()">Tambah / Update</button>
+          <button class="btn-ok" onclick="addProduct()">Tambah / Update</button>
           <input id="pSearch" placeholder="Cari produk..." oninput="renderProducts()" />
         </div>
         <div class="mt16">
@@ -133,7 +148,7 @@
       </div>
     </section>
 
-    <!-- BARANG KELUAR -->
+    <!-- BARANG KELUAR (PENYESUAIAN) -->
     <section id="sec-out">
       <div class="card p16">
         <div class="row wrap" style="justify-content:space-between">
@@ -229,7 +244,7 @@
     </section>
   </div>
 
-  <!-- PRINT AREA -->
+  <!-- PRINT AREA (THERMAL) -->
   <div id="printArea">
     <h3 style="text-align:center">TOKO BANGUNAN</h3>
     <p style="text-align:center">Jl. Contoh 123 · 0812-3456-7890</p>
@@ -249,28 +264,26 @@
     <p style="text-align:center">Terima kasih 🙏</p>
   </div>
 
-  <!-- FIREBASE + APP LOGIC -->
- <script type="module"> // --- Import Firebase --- 
-   import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js"; import { getFirestore, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js"; // --- Konfigurasi Firebase (ganti dengan punyamu) --- 
-   const firebaseConfig = { apiKey: "AIzaSyAJexdQUpqkeg24nAPJ1rv76f62DhZmu2g", authDomain: "kasirnajarputra-6731e.firebaseapp.com", projectId: "kasirnajarputra-6731e", storageBucket: "kasirnajarputra-6731e.firebasestorage.app", messagingSenderId: "271162396307", appId: "1:271162396307:web:5d07b2d2b05fe037420766", measurementId: "G-8LSYG7VBQ5" }; const app = initializeApp(firebaseConfig); const db = getFirestore(app); 
-   // --- Login Logic --- 
-   const loginForm = document.getElementById("loginForm"); loginForm.addEventListener("submit", async (e) => { e.preventDefault(); const username = document.getElementById("username").value.trim(); const password = document.getElementById("password").value.trim(); const q = query(collection(db, "users"), where("username", "==", username), where("password", "==", password)); const querySnapshot = await getDocs(q); if (!querySnapshot.empty) { 
-     // login sukses 
-     document.getElementById("loginPage").classList.add("hidden"); document.getElementById("menuPage").classList.remove("hidden"); } else { alert("❌ Username atau password salah!"); } });
-
-    // ---------- Utils ----------
+  <script>
+    // === UTIL & STORAGE ===
     const fmt = n => Number(n||0).toLocaleString('id-ID');
+    const now = () => new Date().toISOString();
     const uid = (p='TX') => p + Math.random().toString(36).slice(2,8).toUpperCase();
-    const nowISO = () => new Date().toISOString();
 
-    // local session
     const store = {
-      get(k,d){ try{ return JSON.parse(localStorage.getItem(k)) ?? d } catch(e){ return d } },
-      set(k,v){ localStorage.setItem(k, JSON.stringify(v)) }
-    };
+      get(k, d){try{return JSON.parse(localStorage.getItem(k)) ?? d}catch{ return d}},
+      set(k, v){localStorage.setItem(k, JSON.stringify(v))}
+    }
 
-    // ---------- UI state ----------
+    // Default seed
+    if(!store.get('users')) store.set('users',[{u:'kasir',p:'1234',name:'Kasir Demo'}]);
+    if(!store.get('products')) store.set('products',[]);
+    if(!store.get('stockIn')) store.set('stockIn',[]);
+    if(!store.get('stockOut')) store.set('stockOut',[]);
+    if(!store.get('sales')) store.set('sales',[]);
+
     let session = store.get('session', null);
+
     function setLoginState(){
       const el = document.getElementById('loginState');
       const btn = document.getElementById('btnLogout');
@@ -278,221 +291,140 @@
       else { el.textContent = 'Belum login'; btn.style.display='none'; }
     }
 
-    // ---------- NAV ----------
+    // === NAVIGATION ===
     function go(id){
       document.querySelectorAll('section').forEach(s=>s.classList.remove('active'));
       document.getElementById(id).classList.add('active');
-      // refresh data when buka halaman
+      // refresh dropdowns/tables when entering a page
+      if(id==='sec-menu'){}
       if(id==='sec-products') renderProducts();
-      if(id==='sec-in'){ awaitFillProducts('inProd'); renderIn(); }
-      if(id==='sec-out'){ awaitFillProducts('outProd'); renderOut(); }
-      if(id==='sec-pos'){ awaitFillProducts('posProd'); resetCartUI(); }
+      if(id==='sec-in'){fillProductSelect('inProd'); renderIn();}
+      if(id==='sec-out'){fillProductSelect('outProd'); renderOut();}
+      if(id==='sec-pos'){fillProductSelect('posProd'); resetCartUI();}
       if(id==='sec-sales') renderSales();
       if(id==='sec-opname') renderOpname();
       window.scrollTo(0,0);
     }
 
-    // small helper for calling async in go above
-    async function awaitFillProducts(selId){ await fillProductSelect(selId); if(selId==='posProd'){ const priceEl=document.getElementById('posPrice'); const sel=document.getElementById('posProd'); priceEl.value = Number(sel.selectedOptions[0]?.dataset.price||0);} }
-
-    // ---------- AUTH ----------
-    async function login(){
+    // === AUTH ===
+    function login(){
       const u = document.getElementById('inUser').value.trim();
       const p = document.getElementById('inPass').value.trim();
-      if(!u || !p){ alert('Username & password wajib'); return; }
-
-      // try Firestore users collection
-      try {
-        const q = query(collection(db,'users'), where('u','==',u), where('p','==',p));
-        const snap = await getDocs(q);
-        if(!snap.empty){
-          const docu = snap.docs[0].data();
-          session = {u: docu.u, name: docu.name || docu.u, ts: nowISO()};
-          store.set('session', session); setLoginState();
-          document.getElementById('sec-login').classList.remove('active');
-          document.getElementById('sec-menu').classList.add('active');
-          return;
-        }
-      } catch(e){
-        console.error(e);
-      }
-
+      const users = store.get('users',[]);
+      const found = users.find(x=>x.u===u && x.p===p);
+      if(!found){ alert('Username atau password salah'); return; }
+      session = {u:found.u,name:found.name||found.u,ts:now()};
+      store.set('session', session);
+      setLoginState();
+      document.getElementById('sec-login').classList.remove('active');
+      document.getElementById('sec-menu').classList.add('active');
+    }
     function logout(){ session=null; localStorage.removeItem('session'); setLoginState(); go('sec-login'); }
 
-    // ---------- PRODUCTS ----------
-    async function renderProducts(){
-      const qText = (document.getElementById('pSearch').value||'').toLowerCase();
-      const tbody = document.getElementById('tblProducts');
-      tbody.innerHTML = `<tr><td colspan="5" class="muted">Memuat...</td></tr>`;
-      try {
-        const snap = await getDocs(collection(db,'products'));
-        let list = snap.docs.map(d=>({id:d.id, ...d.data()}));
-        if(qText) list = list.filter(p=> (p.name||'').toLowerCase().includes(qText) || (p.sku||'').toLowerCase().includes(qText));
-        if(list.length===0) { tbody.innerHTML = `<tr><td colspan='5' class='muted'>Belum ada data</td></tr>`; return; }
-        tbody.innerHTML = list.map(p=>`<tr>
+    // === PRODUCTS ===
+    function renderProducts(){
+      const q = (document.getElementById('pSearch').value||'').toLowerCase();
+      const rows = store.get('products',[])
+        .filter(p=>!q || p.name.toLowerCase().includes(q) || (p.sku||'').toLowerCase().includes(q))
+        .map(p=>`<tr>
           <td>${p.name}</td>
           <td>${p.sku||''}</td>
           <td class='right'>${fmt(p.price)}</td>
           <td class='right'>${fmt(p.stock||0)}</td>
           <td class='row'><button class='btn-ghost' onclick="editProduct('${p.id}')">Edit</button>
-              <button class='btn-bad' onclick="deleteProduct('${p.id}')">Hapus</button></td>
+              <button class='btn-bad' onclick="delProduct('${p.id}')">Hapus</button></td>
         </tr>`).join('');
-      } catch(e){
-        console.error(e); tbody.innerHTML = `<tr><td colspan='5' class='muted'>Gagal memuat produk</td></tr>`;
-      }
+      document.getElementById('tblProducts').innerHTML = rows || `<tr><td colspan='5' class='muted'>Belum ada data</td></tr>`;
     }
-
-    // add or update product (if id exists in hidden field)
-    let editingProductId = null;
-    async function addOrUpdateProduct(){
-      const name = document.getElementById('pName').value.trim();
-      const sku = document.getElementById('pSku').value.trim();
-      const price = Number(document.getElementById('pPrice').value||0);
-      if(!name) { alert('Nama produk wajib'); return; }
-      try {
-        if(editingProductId){
-          await updateDoc(doc(db,'products',editingProductId), { name, sku, price });
-          editingProductId = null;
-        } else {
-          // try to find existing by sku or name
-          if(sku){
-            const q = query(collection(db,'products'), where('sku','==',sku));
-            const snap = await getDocs(q);
-            if(!snap.empty){
-              const id = snap.docs[0].id;
-              await updateDoc(doc(db,'products',id), { name, sku, price });
-              renderProducts(); clearProductInputs();
-              alert('Produk diperbarui (berdasarkan SKU)');
-              return;
-            }
-          }
-          // else create new
-          await addDoc(collection(db,'products'), { name, sku, price, stock: 0, createdAt: serverTimestamp() });
-        }
-        renderProducts(); clearProductInputs(); alert('Produk disimpan');
-      } catch(e){
-        console.error(e); alert('Gagal menyimpan produk');
-      }
+    function addProduct(){
+      let name = document.getElementById('pName').value.trim();
+      let sku  = document.getElementById('pSku').value.trim();
+      let price= Number(document.getElementById('pPrice').value||0);
+      if(!name){alert('Nama produk wajib');return}
+      const list = store.get('products',[]);
+      // update if exists by name or sku
+      let p = list.find(x=>x.name.toLowerCase()===name.toLowerCase() || (sku && x.sku===sku));
+      if(p){ p.name=name; p.sku=sku; p.price=price; }
+      else { p={id:uid('PRD'),name,sku,price,stock:0}; list.push(p); }
+      store.set('products',list);
+      document.getElementById('pName').value=''; document.getElementById('pSku').value=''; document.getElementById('pPrice').value='';
+      renderProducts();
+      alert('Produk disimpan');
     }
-    function clearProductInputs(){ document.getElementById('pName').value=''; document.getElementById('pSku').value=''; document.getElementById('pPrice').value=''; editingProductId = null; }
-
-    async function editProduct(id){
-      try{
-        const d = await getDoc(doc(db,'products',id));
-        if(!d.exists()) return alert('Produk tidak ditemukan');
-        const p = d.data();
-        document.getElementById('pName').value = p.name||'';
-        document.getElementById('pSku').value = p.sku||'';
-        document.getElementById('pPrice').value = p.price||0;
-        editingProductId = id;
-        window.scrollTo(0,0);
-      }catch(e){ console.error(e); }
+    function editProduct(id){
+      const p = store.get('products',[]).find(x=>x.id===id); if(!p) return;
+      document.getElementById('pName').value=p.name;
+      document.getElementById('pSku').value=p.sku||'';
+      document.getElementById('pPrice').value=p.price||0;
+      window.scrollTo(0,0);
     }
-    async function deleteProduct(id){
+    function delProduct(id){
       if(!confirm('Hapus produk ini?')) return;
-      try { await deleteDoc(doc(db,'products',id)); renderProducts(); alert('Produk dihapus'); }
-      catch(e){ console.error(e); alert('Gagal menghapus produk'); }
+      let list = store.get('products',[]).filter(p=>p.id!==id);
+      store.set('products',list); renderProducts();
     }
-
-    // fill select with products
-    async function fillProductSelect(selId){
+    function fillProductSelect(selId){
       const sel = document.getElementById(selId);
-      sel.innerHTML = `<option value=''>Memuat...</option>`;
-      try{
-        const snap = await getDocs(collection(db,'products'));
-        const list = snap.docs.map(d=>({id:d.id, ...d.data()}));
-        if(list.length===0){ sel.innerHTML = `<option value=''>Belum ada produk</option>`; return; }
-        sel.innerHTML = list.map(p=>`<option value='${p.id}' data-price='${p.price||0}'>${p.name}</option>`).join('');
-        if(selId==='posProd'){
-          const priceEl = document.getElementById('posPrice');
-          sel.onchange = () => { priceEl.value = Number(sel.selectedOptions[0]?.dataset.price||0) };
-          priceEl.value = Number(sel.selectedOptions[0]?.dataset.price||0);
-        }
-      }catch(e){ console.error(e); sel.innerHTML = `<option value=''>Gagal memuat</option>`; }
+      const list = store.get('products',[]);
+      sel.innerHTML = list.map(p=>`<option value='${p.id}' data-price='${p.price||0}'>${p.name}</option>`).join('');
+      // auto fill price when used in POS
+      if(selId==='posProd'){
+        const priceEl = document.getElementById('posPrice');
+        sel.onchange = () => { priceEl.value = Number(sel.selectedOptions[0]?.dataset.price||0) };
+        priceEl.value = Number(sel.selectedOptions[0]?.dataset.price||0);
+      }
     }
-    function openNewProductFrom(backSel){ go('sec-products'); setTimeout(()=>document.getElementById('pName').focus(),200); }
+    function openNewProductFrom(backSel){
+      go('sec-products');
+      setTimeout(()=>document.getElementById('pName').focus(),100);
+    }
 
-    // ---------- STOCK IN ----------
-    async function stockIn(){
+    // === STOCK IN ===
+    function stockIn(){
       const pid = document.getElementById('inProd').value; if(!pid) return alert('Pilih produk');
       const qty = Number(document.getElementById('inQty').value||0); if(qty<=0) return alert('Qty > 0');
-      const note = document.getElementById('inNote').value||'';
-      try{
-        // transaction: add stockIn doc and update product stock
-        await addDoc(collection(db,'stockIn'), { pid, qty, note, ts: serverTimestamp() });
-        // update product stock (safe with transaction)
-        await runTransaction(db, async (t) => {
-          const pRef = doc(db,'products',pid);
-          const pDoc = await t.get(pRef);
-          if(!pDoc.exists()) throw "Produk tidak ditemukan";
-          const newStock = (pDoc.data().stock||0) + qty;
-          t.update(pRef, { stock: newStock });
-        });
-        document.getElementById('inQty').value=''; document.getElementById('inNote').value='';
-        renderIn(); alert('Barang masuk dicatat');
-      }catch(e){ console.error(e); alert('Gagal mencatat barang masuk'); }
+      const note= document.getElementById('inNote').value||'';
+      const rec = {id:uid('IN'),pid,qty,ts:now(),note};
+      const ins = store.get('stockIn',[]); ins.push(rec); store.set('stockIn',ins);
+      const prods = store.get('products',[]); const p=prods.find(x=>x.id===pid); if(p){p.stock=(p.stock||0)+qty; store.set('products',prods);} 
+      document.getElementById('inQty').value=''; document.getElementById('inNote').value='';
+      renderIn(); alert('Barang masuk dicatat');
     }
-    async function renderIn(){
-      const tbody = document.getElementById('tblIn'); tbody.innerHTML = `<tr><td colspan='4' class='muted'>Memuat...</td></tr>`;
-      try{
-        const snap = await getDocs(query(collection(db,'stockIn'), orderBy('ts','desc')));
-        const prodsSnap = await getDocs(collection(db,'products'));
-        const prods = Object.fromEntries(prodsSnap.docs.map(d=>[d.id,d.data()]));
-        if(snap.empty){ tbody.innerHTML = `<tr><td colspan='4' class='muted'>Belum ada data</td></tr>`; return; }
-        tbody.innerHTML = snap.docs.map(d=>{
-          const r = d.data();
-          const name = prods[r.pid]?.name || '?';
-          const ts = r.ts && r.ts.toDate ? r.ts.toDate().toLocaleString('id-ID') : '-';
-          return `<tr><td>${ts}</td><td>${name}</td><td class='right'>${fmt(r.qty)}</td><td>${r.note||''}</td></tr>`;
-        }).join('');
-      }catch(e){ console.error(e); tbody.innerHTML = `<tr><td colspan='4' class='muted'>Gagal memuat</td></tr>`; }
+    function renderIn(){
+      const ins = store.get('stockIn',[]).slice().reverse();
+      const prods = store.get('products',[]);
+      const rows = ins.map(r=>`<tr><td>${new Date(r.ts).toLocaleString('id-ID')}</td><td>${prods.find(p=>p.id===r.pid)?.name||'?'}</td><td class='right'>${fmt(r.qty)}</td><td>${r.note||''}</td></tr>`).join('');
+      document.getElementById('tblIn').innerHTML = rows || `<tr><td colspan='4' class='muted'>Belum ada data</td></tr>`;
     }
 
-    // ---------- STOCK OUT ----------
-    async function stockOut(){
+    // === STOCK OUT ===
+    function stockOut(){
       const pid = document.getElementById('outProd').value; if(!pid) return alert('Pilih produk');
       const qty = Number(document.getElementById('outQty').value||0); if(qty<=0) return alert('Qty > 0');
-      const note = document.getElementById('outNote').value||'';
-      try{
-        // check stock and run transaction
-        await runTransaction(db, async (t) => {
-          const pRef = doc(db,'products',pid);
-          const pDoc = await t.get(pRef);
-          if(!pDoc.exists()) throw "Produk tidak ditemukan";
-          const cur = pDoc.data().stock||0;
-          if(cur < qty) throw "Stok tidak cukup";
-          t.update(pRef, { stock: cur - qty });
-        });
-        await addDoc(collection(db,'stockOut'), { pid, qty, note, ts: serverTimestamp() });
-        document.getElementById('outQty').value=''; document.getElementById('outNote').value='';
-        renderOut(); alert('Barang keluar dicatat');
-      }catch(e){ console.error(e); alert(typeof e === 'string' ? e : 'Gagal mencatat barang keluar'); }
+      const note= document.getElementById('outNote').value||'';
+      const prods = store.get('products',[]); const p=prods.find(x=>x.id===pid); if(!p) return; if((p.stock||0)<qty) return alert('Stok tidak cukup');
+      const rec = {id:uid('OUT'),pid,qty,ts:now(),note};
+      const outs = store.get('stockOut',[]); outs.push(rec); store.set('stockOut',outs);
+      p.stock = (p.stock||0) - qty; store.set('products',prods);
+      document.getElementById('outQty').value=''; document.getElementById('outNote').value='';
+      renderOut(); alert('Barang keluar dicatat');
     }
-    async function renderOut(){
-      const tbody = document.getElementById('tblOut'); tbody.innerHTML = `<tr><td colspan='4' class='muted'>Memuat...</td></tr>`;
-      try{
-        const snap = await getDocs(query(collection(db,'stockOut'), orderBy('ts','desc')));
-        const prodsSnap = await getDocs(collection(db,'products'));
-        const prods = Object.fromEntries(prodsSnap.docs.map(d=>[d.id,d.data()]));
-        if(snap.empty){ tbody.innerHTML = `<tr><td colspan='4' class='muted'>Belum ada data</td></tr>`; return; }
-        tbody.innerHTML = snap.docs.map(d=>{
-          const r = d.data();
-          const name = prods[r.pid]?.name || '?';
-          const ts = r.ts && r.ts.toDate ? r.ts.toDate().toLocaleString('id-ID') : '-';
-          return `<tr><td>${ts}</td><td>${name}</td><td class='right'>${fmt(r.qty)}</td><td>${r.note||''}</td></tr>`;
-        }).join('');
-      }catch(e){ console.error(e); tbody.innerHTML = `<tr><td colspan='4' class='muted'>Gagal memuat</td></tr>`; }
+    function renderOut(){
+      const outs = store.get('stockOut',[]).slice().reverse();
+      const prods = store.get('products',[]);
+      const rows = outs.map(r=>`<tr><td>${new Date(r.ts).toLocaleString('id-ID')}</td><td>${prods.find(p=>p.id===r.pid)?.name||'?'}</td><td class='right'>${fmt(r.qty)}</td><td>${r.note||''}</td></tr>`).join('');
+      document.getElementById('tblOut').innerHTML = rows || `<tr><td colspan='4' class='muted'>Belum ada data</td></tr>`;
     }
 
-    // ---------- POS / CART / CHECKOUT ----------
+    // === POS ===
     let cart = [];
-    function resetCartUI(){ cart=[]; renderCart(); document.getElementById('payCash').value=''; document.getElementById('payNote').value=''; document.getElementById('posQty').value=''; }
+    function resetCartUI(){ cart=[]; renderCart(); document.getElementById('payCash').value=''; document.getElementById('payNote').value=''; document.getElementById('posQty').value='';}
     function addToCart(){
-      const pid = document.getElementById('posProd').value; if(!pid) return alert('Pilih produk');
+      const pid = document.getElementById('posProd').value; if(!pid) return;
       const price = Number(document.getElementById('posPrice').value||0);
       const qty = Number(document.getElementById('posQty').value||0); if(qty<=0) return alert('Qty > 0');
-      const name = document.getElementById('posProd').selectedOptions[0].textContent;
-      cart.push({ pid, name, price, qty, sub: price * qty });
+      const p = store.get('products',[]).find(x=>x.id===pid); if(!p) return;
+      cart.push({pid,name:p.name,price,qty,sub:price*qty});
       renderCart(); document.getElementById('posQty').value='';
     }
     function removeCart(i){ cart.splice(i,1); renderCart(); }
@@ -501,186 +433,106 @@
       document.getElementById('tblCart').innerHTML = rows || `<tr><td colspan='5' class='muted'>Belum ada item</td></tr>`;
       const tot = cart.reduce((a,b)=>a+b.sub,0); document.getElementById('cartTotal').textContent = fmt(tot);
     }
-
-    async function checkout(){
+    function checkout(){
       if(cart.length===0) return alert('Keranjang kosong');
       if(!session) return alert('Harus login');
+      const prods = store.get('products',[]);
+      // cek stok cukup
+      for(const it of cart){ const p=prods.find(x=>x.id===it.pid); if(!p|| (p.stock||0)<it.qty) return alert('Stok tidak cukup untuk '+it.name) }
       const cash = Number(document.getElementById('payCash').value||0);
       const note = document.getElementById('payNote').value||'';
       const total = cart.reduce((a,b)=>a+b.sub,0);
-      if(cash < total) return alert('Tunai kurang');
-
-      // transaction: cek stok & update product stocks, lalu simpan transaksi
-      try{
-        // run one big transaction that checks & updates stocks (but transactions can't write to multiple collections arbitrarily in some cases; we will update product stocks inside transaction, then add sale doc outside)
-        await runTransaction(db, async (t) => {
-          for(const it of cart){
-            const pRef = doc(db,'products',it.pid);
-            const pDoc = await t.get(pRef);
-            if(!pDoc.exists()) throw `Produk ${it.name} tidak ditemukan`;
-            const cur = pDoc.data().stock || 0;
-            if(cur < it.qty) throw `Stok tidak cukup untuk ${it.name}`;
-            t.update(pRef, { stock: cur - it.qty });
-          }
-        });
-
-        // simpan transaksi (sale)
-        await addDoc(collection(db,'sales'), {
-          id: uid('SALE'),
-          ts: serverTimestamp(),
-          cashier: session.name,
-          total,
-          items: cart,
-          note
-        });
-
-        // simpan juga ke koleksi stockOut per item (opsional): kita buat catatan keluar dari penjualan
-        for(const it of cart){
-          await addDoc(collection(db,'stockOut'), { pid: it.pid, qty: it.qty, note: `Sale ${session.name}`, ts: serverTimestamp() });
-        }
-
-        printSale({ items: cart, total, cashier: session.name, id: '---' }, cash);
-        resetCartUI();
-        alert('Transaksi berhasil');
-      }catch(e){
-        console.error(e);
-        alert(typeof e === 'string' ? e : 'Gagal melakukan checkout (mungkin stok berubah). Coba refresh produk.');
-      }
+      if(cash<total) return alert('Tunai kurang');
+      // kurangi stok
+      for(const it of cart){ const p=prods.find(x=>x.id===it.pid); p.stock -= it.qty; }
+      store.set('products',prods);
+      // simpan transaksi
+      const sale = {id:uid('SALE'),ts:now(),cashier:session.name,total,items:cart,note};
+      const sales = store.get('sales',[]); sales.push(sale); store.set('sales',sales);
+      // cetak
+      printSale(sale,cash);
+      // reset UI
+      resetCartUI();
+      alert('Transaksi berhasil');
     }
-
-    function printSale(sale, cash){
+    function printSale(sale,cash){
       const body = document.getElementById('prnBody');
       body.innerHTML = sale.items.map(it=>`<tr><td>${it.name}</td><td class='right'>${fmt(it.qty)}</td><td class='right'>${fmt(it.price)}</td><td class='right'>${fmt(it.sub)}</td></tr>`).join('');
-      document.getElementById('prnMeta').textContent = `${new Date().toLocaleString('id-ID')} · Kasir: ${sale.cashier} · ID: ${sale.id}`;
+      document.getElementById('prnMeta').textContent = `${new Date(sale.ts).toLocaleString('id-ID')} · Kasir: ${sale.cashier} · ID: ${sale.id}`;
       document.getElementById('prnTotal').textContent = fmt(sale.total);
       document.getElementById('prnCash').textContent = fmt(cash);
       document.getElementById('prnChange').textContent = fmt(cash - sale.total);
       window.print();
     }
 
-    // ---------- SALES LIST ----------
-    async function renderSales(){
-      const tbody = document.getElementById('tblSales'); tbody.innerHTML = `<tr><td colspan='6' class='muted'>Memuat...</td></tr>`;
-      try{
-        const snap = await getDocs(query(collection(db,'sales'), orderBy('ts','desc')));
-        if(snap.empty){ tbody.innerHTML = `<tr><td colspan='6' class='muted'>Belum ada transaksi</td></tr>`; return; }
-        const rows = snap.docs.map(d=>{
-          const s = d.data();
-          const ts = s.ts && s.ts.toDate ? s.ts.toDate().toLocaleString('id-ID') : '-';
-          const id = s.id || d.id;
-          const items = (s.items || []).length;
-          return `<tr>
-            <td>${ts}</td>
-            <td>${id}</td>
-            <td class='right'>${fmt(items)}</td>
-            <td class='right'>${fmt(s.total)}</td>
-            <td>${s.cashier||''}</td>
-            <td class='row'>
-              <button class='btn-ghost' onclick="reprint('${d.id}')">Cetak</button>
-              <button class='btn-bad' onclick="removeSale('${d.id}')">Hapus</button>
-            </td>
-          </tr>`;
-        }).join('');
-        tbody.innerHTML = rows;
-      }catch(e){ console.error(e); tbody.innerHTML = `<tr><td colspan='6' class='muted'>Gagal memuat</td></tr>`; }
+    // === SALES LIST ===
+    function renderSales(){
+      const sales = store.get('sales',[]).slice().reverse();
+      const from = document.getElementById('sFrom').value ? new Date(document.getElementById('sFrom').value) : null;
+      const to   = document.getElementById('sTo').value   ? new Date(document.getElementById('sTo').value)   : null;
+      const rows = sales.filter(s=>{
+        const d = new Date(s.ts);
+        if(from && d < from) return false;
+        if(to){ const tend=new Date(to); tend.setHours(23,59,59,999); if(d>tend) return false; }
+        return true;
+      }).map(s=>`<tr>
+        <td>${new Date(s.ts).toLocaleString('id-ID')}</td>
+        <td>${s.id}</td>
+        <td class='right'>${fmt(s.items.length)}</td>
+        <td class='right'>${fmt(s.total)}</td>
+        <td>${s.cashier}</td>
+        <td class='row'>
+          <button class='btn-ghost' onclick="reprint('${s.id}')">Cetak</button>
+          <button class='btn-bad' onclick="removeSale('${s.id}')">Hapus</button>
+        </td>
+      </tr>`).join('');
+      document.getElementById('tblSales').innerHTML = rows || `<tr><td colspan='6' class='muted'>Belum ada transaksi</td></tr>`;
     }
-    async function reprint(docId){
-      try{
-        const d = await getDoc(doc(db,'sales',docId));
-        if(!d.exists()) return alert('Data transaksi tidak ditemukan');
-        const s = d.data();
-        printSale({ items: s.items, total: s.total, cashier: s.cashier, id: s.id||docId }, s.total);
-      }catch(e){ console.error(e); alert('Gagal reprint'); }
+    function reprint(id){
+      const s = store.get('sales',[]).find(x=>x.id===id); if(!s) return;
+      printSale(s, s.total); // assume cash==total for reprint; sesuaikan bila simpan cash di data
     }
-    async function removeSale(docId){
+    function removeSale(id){
       if(!confirm('Hapus transaksi ini? Stok TIDAK otomatis kembali.')) return;
-      try{ await deleteDoc(doc(db,'sales',docId)); renderSales(); alert('Dihapus'); }catch(e){ console.error(e); alert('Gagal menghapus'); }
+      const list = store.get('sales',[]).filter(x=>x.id!==id); store.set('sales',list); renderSales();
     }
 
-    // ---------- OPNAME ----------
-    async function renderOpname(){
-      const tbody = document.getElementById('tblOpname'); tbody.innerHTML = `<tr><td colspan='3' class='muted'>Memuat...</td></tr>`;
-      try{
-        const snap = await getDocs(query(collection(db,'products'), orderBy('name')));
-        if(snap.empty){ tbody.innerHTML = `<tr><td colspan='3' class='muted'>Belum ada produk</td></tr>`; return; }
-        tbody.innerHTML = snap.docs.map(d=>{
-          const p = d.data();
-          return `<tr>
-            <td>${p.name}</td>
-            <td class='right'>${fmt(p.stock||0)}</td>
-            <td class='right'><input style='width:120px' type='number' id='op_${d.id}' placeholder='Hitung' /></td>
-          </tr>`;
-        }).join('');
-      }catch(e){ console.error(e); tbody.innerHTML = `<tr><td colspan='3' class='muted'>Gagal memuat</td></tr>`; }
+    // === OPNAME ===
+    function renderOpname(){
+      const prods = store.get('products',[]);
+      const rows = prods.map(p=>`<tr>
+        <td>${p.name}</td>
+        <td class='right'>${fmt(p.stock||0)}</td>
+        <td class='right'><input style='width:120px' type='number' id='op_${p.id}' placeholder='Hitung' /></td>
+      </tr>`).join('');
+      document.getElementById('tblOpname').innerHTML = rows || `<tr><td colspan='3' class='muted'>Belum ada produk</td></tr>`;
     }
-
-    async function applyOpname(){
-      try{
-        const prodsSnap = await getDocs(collection(db,'products'));
-        let adjCount = 0;
-        for(const d of prodsSnap.docs){
-          const p = d.data();
-          const el = document.getElementById('op_'+d.id);
-          if(!el) continue;
-          const counted = el.value === '' ? null : Number(el.value);
-          if(counted === null || isNaN(counted)) continue;
-          const diff = counted - (p.stock||0);
-          if(diff === 0) continue;
-          if(diff > 0){
-            await addDoc(collection(db,'stockIn'), { pid: d.id, qty: diff, note: 'Opname (+)', ts: serverTimestamp() });
-          } else {
-            await addDoc(collection(db,'stockOut'), { pid: d.id, qty: Math.abs(diff), note: 'Opname (-)', ts: serverTimestamp() });
-          }
-          await updateDoc(doc(db,'products',d.id), { stock: counted });
-          adjCount++;
+    function applyOpname(){
+      const prods = store.get('products',[]);
+      let adjCount=0;
+      for(const p of prods){
+        const el = document.getElementById('op_'+p.id); if(!el) continue;
+        const counted = el.value===''?null:Number(el.value);
+        if(counted===null || isNaN(counted)) continue;
+        const diff = counted - (p.stock||0);
+        if(diff===0) continue;
+        if(diff>0){ // treat as stock in
+          const rec = {id:uid('IN'),pid:p.id,qty:diff,ts:now(),note:'Opname (+)'};
+          const ins = store.get('stockIn',[]); ins.push(rec); store.set('stockIn',ins);
+        }else{ // stock out
+          const rec = {id:uid('OUT'),pid:p.id,qty:Math.abs(diff),ts:now(),note:'Opname (-)'};
+          const outs = store.get('stockOut',[]); outs.push(rec); store.set('stockOut',outs);
         }
-        if(adjCount === 0) alert('Tidak ada perubahan opname');
-        else { alert('Opname diterapkan ke '+adjCount+' produk'); renderOpname(); }
-      }catch(e){ console.error(e); alert('Gagal menerapkan opname'); }
+        p.stock = counted; adjCount++;
+      }
+      store.set('products',prods);
+      if(adjCount===0) alert('Tidak ada perubahan opname'); else alert('Opname diterapkan ke '+adjCount+' produk');
+      renderOpname();
     }
 
-    // ---------- INIT ----------
+    // === INIT ===
+    if(store.get('session')){ session = store.get('session'); go('sec-menu'); }
     setLoginState();
-    // if session exist, auto show menu
-    if(store.get('session')){ session = store.get('session'); setLoginState(); document.getElementById('sec-login').classList.remove('active'); document.getElementById('sec-menu').classList.add('active'); }
-
-    // expose for HTML onclick usage
-    window.go = go;
-    window.login = login;
-    window.logout = logout;
-    window.addOrUpdateProduct = addOrUpdateProduct;
-    window.editProduct = editProduct;
-    window.deleteProduct = deleteProduct;
-    window.fillProductSelect = fillProductSelect;
-    window.openNewProductFrom = openNewProductFrom;
-    window.stockIn = stockIn;
-    window.stockOut = stockOut;
-    window.addToCart = addToCart;
-    window.resetCartUI = resetCartUI;
-    window.checkout = checkout;
-    window.renderSales = renderSales;
-    window.reprint = reprint;
-    window.removeSale = removeSale;
-    window.renderOpname = renderOpname;
-    window.applyOpname = applyOpname;
-    window.renderIn = renderIn;
-    window.renderOut = renderOut;
-    window.renderProducts = renderProducts;
-
-    // when entering product-dependent pages, fill selects
-    document.addEventListener('visibilitychange', ()=>{ /* nothing */ });
-
-    // initial preload for some pages (not blocking)
-    (async ()=>{
-      await renderProducts();
-      await fillProductSelect('inProd');
-      await fillProductSelect('outProd');
-      await fillProductSelect('posProd');
-      await renderIn(); await renderOut(); await renderOpname(); await renderSales();
-    })();
-
   </script>
 </body>
 </html>
-
-
